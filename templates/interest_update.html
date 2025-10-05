@@ -1,4 +1,4 @@
-<div class="modal-dialog" data-modal="interest-update">
+<div class="modal-dialog modal-dialog--wide" data-modal="interest-update">
     <button type="button" class="modal-close button button--icon _animate" data-dismiss="modal">
         <img src="{{ url_for('static', filename='images/close.svg') }}" onload="SVGInject(this)" />
         <span class="sr-only">Zatvori modal</span>
@@ -10,69 +10,78 @@
         <div class="alert alert--error" data-message="interest-update" hidden>
             Format za unos datuma mora biti 01.01.2025, a za unos kamata 99.99
         </div>
+        <div class="interest-periods__toolbar">
+            <button type="button" class="button button--primary button--tiny" data-action="toggle-interest-form">
+                Dodaj novo razdoblje
+            </button>
+        </div>
         <section class="interest-periods" data-list="interest-periods">
-            {% if interest_periods %}
-            <ul class="interest-periods-list">
-                {% for period in interest_periods %}
-                <li class="interest-period" data-id="{{ period.id }}">
-                    <header class="interest-period__header">
-                        <p class="interest-period__title">Razdoblje {{ loop.index }}</p>
-                        <div class="interest-period__actions">
-                            <button type="button" class="button button--tiny button--secondary"
-                                data-action="edit-interest-period">Uredi razdoblje</button>
-                            <button type="button" class="button button--tiny button--plain"
-                                data-action="delete-interest-period">Obriši razdoblje</button>
-                        </div>
-                    </header>
-                    <dl class="interest-period__details">
-                        <div class="interest-period__row">
-                            <dt>Datum početka</dt>
-                            <dd>{{ period.datum_pocetka }}</dd>
-                        </div>
-                        <div class="interest-period__row">
-                            <dt>Datum završetka</dt>
-                            <dd>{{ period.datum_kraja }}</dd>
-                        </div>
-                        <div class="interest-period__row">
-                            <dt>Stopa za fizičke osobe</dt>
-                            <dd>{{ "%.2f"|format(period.fizicke_osobe|float) }} %</dd>
-                        </div>
-                        <div class="interest-period__row">
-                            <dt>Stopa za pravne osobe</dt>
-                            <dd>{{ "%.2f"|format(period.pravne_osobe|float) }} %</dd>
-                        </div>
-                    </dl>
-                </li>
-                {% endfor %}
-            </ul>
+            {% if periods %}
+            <div class="interest-periods__table-wrapper">
+                <table class="interest-periods-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Datum početka</th>
+                            <th scope="col">Datum završetka</th>
+                            <th scope="col">Fizičke osobe</th>
+                            <th scope="col">Pravne osobe</th>
+                            <th scope="col" class="interest-periods-table__actions">Radnje</th>
+                        </tr>
+                    </thead>
+                    <tbody class="interest-periods-list">
+                        {% for period in periods %}
+                        <tr class="interest-period" data-id="{{ period.id }}">
+                            <td class="interest-period__id">{{ period.id }}</td>
+                            <td class="interest-period__cell" data-column="datum_pocetka">{{ period.datum_pocetka }}</td>
+                            <td class="interest-period__cell" data-column="datum_kraja">{{ period.datum_kraja }}</td>
+                            <td class="interest-period__cell" data-column="fizicke_osobe">
+                                {{ "%.2f"|format(period.fizicke_osobe|float) }} %
+                            </td>
+                            <td class="interest-period__cell" data-column="pravne_osobe">
+                                {{ "%.2f"|format(period.pravne_osobe|float) }} %
+                            </td>
+                            <td class="interest-period__actions">
+                                <button type="button" class="button button--tiny button--secondary"
+                                    data-action="edit-interest-period">Uredi razdoblje</button>
+                                <button type="button" class="button button--tiny button--plain"
+                                    data-action="delete-interest-period">Obriši razdoblje</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
             {% else %}
             <p class="interest-periods__empty">Trenutačno nema zabilježenih razdoblja.</p>
             {% endif %}
         </section>
-        <form class="form" data-form="interest-period-create" method="post" autocomplete="off">
-            <div class="field">
-                <label class="field-label" for="new-period-start">Datum početka</label>
-                <input id="new-period-start" name="datum_pocetka" type="text" placeholder="01.01.2025"
-                    data-field="datum_pocetka" data-input="date-start">
-            </div>
-            <div class="field">
-                <label class="field-label" for="new-period-end">Datum kraja</label>
-                <input id="new-period-end" name="datum_kraja" type="text" placeholder="01.01.2025"
-                    data-field="datum_kraja" data-input="date-end">
-            </div>
-            <div class="field">
-                <label class="field-label" for="new-period-physical">Fizičke osobe</label>
-                <input id="new-period-physical" name="fizicke_osobe" type="text" placeholder="99.99"
-                    data-field="fizicke_osobe" data-input="rate-physical">
-            </div>
-            <div class="field">
-                <label class="field-label" for="new-period-legal">Pravne osobe</label>
-                <input id="new-period-legal" name="pravne_osobe" type="text" placeholder="99.99"
-                    data-field="pravne_osobe" data-input="rate-legal">
-            </div>
-            <div class="actions-toolbar">
-                <button type="submit" class="button button--primary button--tiny">Unesi</button>
-            </div>
-        </form>
+        <section class="interest-periods__form" data-section="interest-form" hidden>
+            <form class="form" data-form="interest-period-create" method="post" autocomplete="off">
+                <div class="field">
+                    <label class="field-label" for="new-period-start">Datum početka</label>
+                    <input id="new-period-start" name="datum_pocetka" type="text" placeholder="01.01.2025"
+                        data-field="datum_pocetka" data-input="date-start">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="new-period-end">Datum kraja</label>
+                    <input id="new-period-end" name="datum_kraja" type="text" placeholder="01.01.2025"
+                        data-field="datum_kraja" data-input="date-end">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="new-period-physical">Fizičke osobe</label>
+                    <input id="new-period-physical" name="fizicke_osobe" type="text" placeholder="99.99"
+                        data-field="fizicke_osobe" data-input="rate-physical">
+                </div>
+                <div class="field">
+                    <label class="field-label" for="new-period-legal">Pravne osobe</label>
+                    <input id="new-period-legal" name="pravne_osobe" type="text" placeholder="99.99"
+                        data-field="pravne_osobe" data-input="rate-legal">
+                </div>
+                <div class="actions-toolbar">
+                    <button type="submit" class="button button--primary button--tiny">Unesi</button>
+                </div>
+            </form>
+        </section>
     </div>
 </div>

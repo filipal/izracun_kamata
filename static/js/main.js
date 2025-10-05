@@ -1309,6 +1309,7 @@ function inicijalizirajModalAzuriranjaKamata() {
 
     const form = modal.querySelector('[data-form="interest-period-create"]');
     const listContainer = modal.querySelector('[data-list="interest-periods"]');
+    const formSection = modal.querySelector('[data-section="interest-form"]');
     const messageElement = modal.querySelector('[data-message="interest-update"]');
     const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
     const rateRegex = /^\d+\.\d{2}$/;
@@ -1362,48 +1363,39 @@ function inicijalizirajModalAzuriranjaKamata() {
 
     const formatRate = value => `${Number(value).toFixed(2)} %`;
 
+    const setToggleButtonState = () => {
+        if (!toggleButton) return;
+        toggleButton.textContent = formSection && !formSection.hidden
+            ? "Zatvori unos"
+            : "Dodaj novo razdoblje";
+    };
+
     const updatePeriodTitles = () => {
         if (!listContainer) return;
         const items = listContainer.querySelectorAll(".interest-period");
         items.forEach((item, index) => {
-            const title = item.querySelector(".interest-period__title");
-            if (title) {
-                title.textContent = `Razdoblje ${index + 1}`;
+            const orderCell = item.querySelector('[data-column="order"]');
+            if (orderCell) {
+                orderCell.textContent = index + 1;
             }
         });
     };
 
     const createPeriodElement = data => {
         const { id, datum_pocetka, datum_kraja, fizicka_osoba, pravna_osoba } = data;
-        const element = document.createElement("li");
+        const element = document.createElement("tr");
         element.className = "interest-period";
         element.dataset.id = id;
         element.innerHTML = `
-            <header class="interest-period__header">
-                <p class="interest-period__title">Razdoblje</p>
-                <div class="interest-period__actions">
-                    <button type="button" class="button button--tiny button--secondary" data-action="edit-interest-period">Uredi razdoblje</button>
-                    <button type="button" class="button button--tiny button--plain" data-action="delete-interest-period">Obriši razdoblje</button>
-                </div>
-            </header>
-            <dl class="interest-period__details">
-                <div class="interest-period__row">
-                    <dt>Datum početka</dt>
-                    <dd>${datum_pocetka}</dd>
-                </div>
-                <div class="interest-period__row">
-                    <dt>Datum završetka</dt>
-                    <dd>${datum_kraja}</dd>
-                </div>
-                <div class="interest-period__row">
-                    <dt>Stopa za fizičke osobe</dt>
-                    <dd>${formatRate(fizicka_osoba)}</dd>
-                </div>
-                <div class="interest-period__row">
-                    <dt>Stopa za pravne osobe</dt>
-                    <dd>${formatRate(pravna_osoba)}</dd>
-                </div>
-            </dl>
+            <td class="interest-period__id">${id}</td>
+            <td class="interest-period__cell" data-column="datum_pocetka">${datum_pocetka}</td>
+            <td class="interest-period__cell" data-column="datum_kraja">${datum_kraja}</td>
+            <td class="interest-period__cell" data-column="fizicke_osobe">${formatRate(fizicka_osoba)}</td>
+            <td class="interest-period__cell" data-column="pravne_osobe">${formatRate(pravna_osoba)}</td>
+            <td class="interest-period__actions">
+                <button type="button" class="button button--tiny button--secondary" data-action="edit-interest-period">Uredi razdoblje</button>
+                <button type="button" class="button button--tiny button--plain" data-action="delete-interest-period">Obriši razdoblje</button>
+            </td>
         `;
 
         return element;
@@ -1414,10 +1406,29 @@ function inicijalizirajModalAzuriranjaKamata() {
 
         let list = listContainer.querySelector(".interest-periods-list");
         if (!list) {
-            list = document.createElement("ul");
-            list.className = "interest-periods-list";
+            const wrapper = document.createElement("div");
+            wrapper.className = "interest-periods__table-wrapper";
+
+            const table = document.createElement("table");
+            table.className = "interest-periods-table";
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Datum početka</th>
+                        <th scope="col">Datum završetka</th>
+                        <th scope="col">Fizičke osobe</th>
+                        <th scope="col">Pravne osobe</th>
+                        <th scope="col" class="interest-periods-table__actions">Radnje</th>
+                    </tr>
+                </thead>
+                <tbody class="interest-periods-list"></tbody>
+            `;
+
+            wrapper.appendChild(table);
             listContainer.innerHTML = "";
-            listContainer.appendChild(list);
+            listContainer.appendChild(wrapper);
+            list = table.querySelector(".interest-periods-list");
         }
 
         return list;
@@ -1432,6 +1443,27 @@ function inicijalizirajModalAzuriranjaKamata() {
         });
         return payload;
     };
+
+    if (toggleButton && formSection) {
+        toggleButton.addEventListener("click", () => {
+            formSection.hidden = !formSection.hidden;
+            setToggleButtonState();
+
+            if (!formSection.hidden) {
+                const firstInput = formSection.querySelector("input");
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }
+        });
+    }
+
+    if (form && formSection) {
+        if (listContainer && listContainer.querySelector(".interest-periods__empty")) {
+            formSection.hidden = false;
+        }
+        setToggleButtonState();
+    }
 
     if (form) {
         form.addEventListener("submit", async event => {
@@ -1488,6 +1520,11 @@ function inicijalizirajModalAzuriranjaKamata() {
 
                 showMessage("success", "Razdoblje je uspješno dodano.");
                 updatePeriodTitles();
+
+                if (formSection) {
+                    formSection.hidden = true;
+                    setToggleButtonState();
+                }
             } catch (error) {
                 console.error("Greška pri dodavanju kamate:", error);
                 showMessage("error", "Dogodila se greška. Pokušajte ponovno.");
@@ -1495,6 +1532,8 @@ function inicijalizirajModalAzuriranjaKamata() {
                 if (submitButton) submitButton.disabled = false;
             }
         });
+    } else {
+        setToggleButtonState();
     }
 
     modal.addEventListener("click", async event => {
@@ -1505,7 +1544,7 @@ function inicijalizirajModalAzuriranjaKamata() {
             const listItem = editButton.closest(".interest-period");
             if (!listItem) return;
 
-            const details = listItem.querySelectorAll(".interest-period__details dd");
+            const details = listItem.querySelectorAll(".interest-period__cell[data-column]");
             const fields = ["datum_pocetka", "datum_kraja", "fizicke_osobe", "pravne_osobe"];
 
             if (listItem.dataset.editing === "true") {
@@ -1531,12 +1570,12 @@ function inicijalizirajModalAzuriranjaKamata() {
                         return;
                     }
 
-                    details.forEach((dd, index) => {
+                    details.forEach((cell, index) => {
                         if (index < 2) {
-                            dd.textContent = data[fields[index]] || payload[fields[index]];
+                            cell.textContent = data[fields[index]] || payload[fields[index]];
                         } else {
                             const key = index === 2 ? "fizicka_osoba" : "pravna_osoba";
-                            dd.textContent = formatRate(data[key] || payload[fields[index]]);
+                            cell.textContent = formatRate(data[key] || payload[fields[index]]);
                         }
                     });
 
@@ -1562,16 +1601,16 @@ function inicijalizirajModalAzuriranjaKamata() {
                 return;
             }
 
-            details.forEach((dd, index) => {
-                const value = index < 2 ? dd.textContent.trim() : parseDisplayValue(dd.textContent);
+            details.forEach((cell, index) => {
+                const value = index < 2 ? cell.textContent.trim() : parseDisplayValue(cell.textContent);
 
                 const input = document.createElement("input");
                 input.type = "text";
                 input.value = value;
                 input.dataset.field = fields[index];
                 input.placeholder = index < 2 ? "01.01.2025" : "99.99";
-                dd.textContent = "";
-                dd.appendChild(input);
+                cell.textContent = "";
+                cell.appendChild(input);
             });
 
             listItem.dataset.editing = "true";
@@ -1612,6 +1651,10 @@ function inicijalizirajModalAzuriranjaKamata() {
                 const list = listContainer.querySelector(".interest-periods-list");
                 if (list && list.children.length === 0) {
                     listContainer.innerHTML = '<p class="interest-periods__empty">Trenutačno nema zabilježenih razdoblja.</p>';
+                    if (formSection) {
+                        formSection.hidden = false;
+                        setToggleButtonState();
+                    }
                 } else {
                     updatePeriodTitles();
                 }
