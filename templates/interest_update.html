@@ -8,41 +8,47 @@
     </header>
     <div class="modal-body">
         <div class="alert alert--error" data-message="interest-update" hidden>
-            Format za unos datuma mora biti 01.01.2025 a za unos kamata 99.99
+            Format za unos datuma mora biti 01.01.2025, a za unos kamata 99.99
         </div>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Datum početka</th>
-                    <th>Datum kraja</th>
-                    <th>Fizičke osobe</th>
-                    <th>Pravne osobe</th>
-                    <th>Radnje</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if interest_periods %}
+        <section class="interest-periods" data-list="interest-periods">
+            {% if interest_periods %}
+            <ul class="interest-periods-list">
                 {% for period in interest_periods %}
-                <tr data-id="{{ period.id }}">
-                    <td>{{ period.datum_pocetka }}</td>
-                    <td>{{ period.datum_kraja }}</td>
-                    <td>{{ period.fizicke_osobe }}</td>
-                    <td>{{ period.pravne_osobe }}</td>
-                    <td class="table-actions">
-                        <button type="button" class="button button--tiny button--secondary"
-                            data-action="edit-interest-period">Uredi</button>
-                        <button type="button" class="button button--tiny button--plain"
-                            data-action="delete-interest-period">Obriši</button>
-                    </td>
-                </tr>
+                <li class="interest-period" data-id="{{ period.id }}">
+                    <header class="interest-period__header">
+                        <p class="interest-period__title">Razdoblje {{ loop.index }}</p>
+                        <div class="interest-period__actions">
+                            <button type="button" class="button button--tiny button--secondary"
+                                data-action="edit-interest-period">Uredi razdoblje</button>
+                            <button type="button" class="button button--tiny button--plain"
+                                data-action="delete-interest-period">Obriši razdoblje</button>
+                        </div>
+                    </header>
+                    <dl class="interest-period__details">
+                        <div class="interest-period__row">
+                            <dt>Datum početka</dt>
+                            <dd>{{ period.datum_pocetka }}</dd>
+                        </div>
+                        <div class="interest-period__row">
+                            <dt>Datum završetka</dt>
+                            <dd>{{ period.datum_kraja }}</dd>
+                        </div>
+                        <div class="interest-period__row">
+                            <dt>Stopa za fizičke osobe</dt>
+                            <dd>{{ "%.2f"|format(period.fizicke_osobe|float) }} %</dd>
+                        </div>
+                        <div class="interest-period__row">
+                            <dt>Stopa za pravne osobe</dt>
+                            <dd>{{ "%.2f"|format(period.pravne_osobe|float) }} %</dd>
+                        </div>
+                    </dl>
+                </li>
                 {% endfor %}
-                {% else %}
-                <tr>
-                    <td colspan="5">Trenutačno nema zapisa.</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
+            </ul>
+            {% else %}
+            <p class="interest-periods__empty">Trenutačno nema zabilježenih razdoblja.</p>
+            {% endif %}
+        </section>
         <form class="form" data-form="interest-period-create" method="post" autocomplete="off">
             <div class="field">
                 <label class="field-label" for="new-period-start">Datum početka</label>
