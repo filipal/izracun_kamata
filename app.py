@@ -1140,10 +1140,10 @@ def izracun():
         zadnji_datum_kamata = get_latest_kamata_end_date()
         if datum_kraja.date() > danasnji_datum:
             if zadnji_datum_kamata and datum_kraja.date() <= zadnji_datum_kamata:
-                warning_messages.append("Izabrali ste datum obračuna kamata u budućnosti.")
+                warning_messages.append("NAPOMENA: Izabrali ste datum obračuna kamata u budućnosti.")
             else:
                 warning_messages.append(
-                    "OPREZ! Odabrali ste datum obračuna kamata nakon zadnjeg dostupnog obračunskog razdoblja."
+                    "OPREZ! Odabrali ste datum obračuna kamata nakon zadnjeg dostupnog obračunskog razdoblja.<br> Izračun možda neće biti točan."
                 )
 
         # Kreiram skup (set) za praćenje ID-ova dodanih uplata
