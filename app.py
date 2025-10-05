@@ -1097,6 +1097,20 @@ def izracun():
         valuta = data.get("valuta", "EUR")
         vrsta_izracuna = data.get("vrsta_izracuna", "Nije odabrano")
         tip_subjekta = data.get("tip_subjekta", "natural-person")
+        warning_messages = []
+
+        kamate_podaci = get_kamate(tip_subjekta)
+        zadnji_datum_kamata = None
+        if kamate_podaci:
+            try:
+                zadnji_datum_kamata = max(
+                    datetime.strptime(kamatni_period.get("datum_kraja"), "%d.%m.%Y")
+                    for kamatni_period in kamate_podaci
+                    if kamatni_period.get("datum_kraja")
+                )
+            except ValueError:
+                zadnji_datum_kamata = None
+
         moratorium = data.get("moratorium", False)
         racuni = data.get("racuni", [])  # Svi računi dolaze ovdje
         print(f"Backend primio vrstu izračuna: {vrsta_izracuna}")
@@ -1111,6 +1125,15 @@ def izracun():
             datum_kraja = datetime.strptime(datum_kraja, "%d.%m.%Y")  # Datum obračuna
         except ValueError:
             return jsonify({"error": "Neispravan format datuma obračuna!"}), 400
+
+        danasnji_datum = datetime.now().date()
+        if datum_kraja.date() > danasnji_datum:
+            if zadnji_datum_kamata and datum_kraja <= zadnji_datum_kamata:
+                warning_messages.append("Izabrali ste datum obračuna kamata u budućnosti")
+            else:
+                warning_messages.append(
+                    "OPREZ! Odabrali ste datum obračuna kamata nakon zadnjeg dostupnog datuma kamatnih stopa"
+                )
 
         # Kreiram skup (set) za praćenje ID-ova dodanih uplata
         dodani_uplata_ids = set()
@@ -1346,7 +1369,7 @@ def izracun():
         json_response["vjerovnik"] = data.get("vjerovnik", {})
         json_response["duznik"] = data.get("duznik", {})
         json_response["vrsta_izracuna"] = data.get("vrsta_izracuna", "Nije odabrano")
-
+        json_response["warning_messages"] = warning_messages
 
         # Debug ispisi
         print("Backend šalje JSON sa uplatama:", json.dumps(json_response["uplate"], indent=4, ensure_ascii=False))
