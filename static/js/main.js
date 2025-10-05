@@ -2909,6 +2909,7 @@ function ucitajPodatkeIzExcelTabele(rows) {
 function showErrorAlert(poruka) {
     const errorAlert = document.getElementById("errorAlert");
     if (errorAlert) {
+        errorAlert.innerHTML = poruka;
         errorAlert.style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
