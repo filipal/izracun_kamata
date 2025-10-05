@@ -277,7 +277,14 @@ function dodajDropdownZaGodine(instance, retries = 5) {
     }
 
     let minGodina = new Date(instance.config.minDate).getFullYear();
-    let maxGodina = new Date(instance.config.maxDate).getFullYear();
+    let maxGodina;
+    if (instance.config.maxDate) {
+        maxGodina = new Date(instance.config.maxDate).getFullYear();
+    } else {
+        let trenutnaGodina = instance.currentYear || new Date().getFullYear();
+        let referentnaGodina = Math.max(trenutnaGodina, new Date().getFullYear());
+        maxGodina = referentnaGodina + 100;
+    }
     let trenutnaGodina = instance.currentYear;
 
     // Pronađi postojeći custom dropdown ako postoji i ukloni ga (sprječava duplikate)
@@ -676,7 +683,6 @@ document.addEventListener("DOMContentLoaded", function () {
         flatpickr(".datepicker", {
             locale: "hr",
             dateFormat: "d.m.Y",
-            maxDate: "today",
             minDate: "30.05.1994",
             disableMobile: true,
             allowInput: true,
@@ -931,7 +937,6 @@ document.addEventListener("DOMContentLoaded", function () {
         flatpickr(dateInput, {
             locale: "hr",
             dateFormat: "d.m.Y",
-            maxDate: "today",
             minDate: "30.05.1994",
             disableMobile: true,
             allowInput: true,
@@ -1417,7 +1422,6 @@ function dodajRacun(target = null, dug = null) {
         let instance = flatpickr(dateInput, {
             locale: "hr",
             dateFormat: "d.m.Y",
-            maxDate: "today",
             minDate: "30.05.1994",
             disableMobile: true,
             allowInput: true,
@@ -1534,7 +1538,6 @@ function dodajUplatu(target = null, uplata = null) {
             flatpickr(dateField, {
                 locale: "hr",
                 dateFormat: "d.m.Y",
-                maxDate: "today",
                 minDate: "30.05.1994",
                 disableMobile: true,
                 allowInput: true,

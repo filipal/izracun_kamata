@@ -1,0 +1,12 @@
+﻿Naziv izračuna;Opis izračuna;Vrsta izračuna;Datum izračuna;Valuta;Vjerovnik;Dužnik
+Izračun;;Obračun zateznih kamata za fizičku osobu;05.10.2025;EUR;;
+
+Stavka / Opis;;;Datum;Iznos;Dug po kamati;Ukupni dug
+Račun 123;;;03.10.2025;1.111,00;0,00;1.111,00
+Period obračuna;Osnovica;Br. dana;K. stopa;Kta razdoblja;Kta kumulativno;Dug kumulativno
+
+Rekapitulacija
+Glavnica (1);1.111,00
+Kamate;0,00
+Uplate (0);0,00
+Ukupni dug;0,00
