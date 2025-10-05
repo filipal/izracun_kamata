@@ -959,7 +959,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const errorAlert = document.getElementById("errorAlert");
             if (errorAlert) {
                 errorAlert.style.display = "none";
-                errorAlert.innerText = "";
             }
 
             let podaci = {
@@ -1099,19 +1098,26 @@ document.addEventListener("DOMContentLoaded", function () {
                     return;
                 }
 
-                // Sigurnosna provjera
-                if (result.error) {
-                    showErrorAlert(result.error);
-                    return;
-                }
-
                 window.jsonResponse = result;  // Spremi rezultat globalno
                 console.log("Spremljen JSON odgovor u window.jsonResponse:", window.jsonResponse);
 
 
                 if (result.error) {
+                    showErrorAlert(result.error);
                     alert("Greška: " + result.error);
                     return;
+                }
+
+                const warningMessages = result.warning_messages || result.warnings || result.warning || [];
+                let combinedWarning = "";
+                if (Array.isArray(warningMessages)) {
+                    combinedWarning = warningMessages.join("<br>");
+                } else if (typeof warningMessages === "string") {
+                    combinedWarning = warningMessages;
+                }
+
+                if (combinedWarning) {
+                    showErrorAlert(combinedWarning);
                 }
 
                 console.log("Finalni podaci prije prikaza:", result);
@@ -2903,7 +2909,6 @@ function ucitajPodatkeIzExcelTabele(rows) {
 function showErrorAlert(poruka) {
     const errorAlert = document.getElementById("errorAlert");
     if (errorAlert) {
-        errorAlert.innerText = poruka;
         errorAlert.style.display = "block";
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
