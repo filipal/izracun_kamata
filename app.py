@@ -506,6 +506,13 @@ def izracunaj_kamate(datum_pocetka, datum_kraja, iznos, tip_subjekta, moratorium
     # Dohvati kamatne stope iz baze
     kamatne_stope = get_kamate(tip_subjekta)
     kamatne_stope = podijeli_kamatne_periode(kamatne_stope, uplate)  # Dodaj ovu liniju
+    sve_kamate = kamatne_stope.copy()
+    zadnji_period_baze = None
+    if sve_kamate:
+        zadnji_period_baze = max(
+            sve_kamate,
+            key=lambda p: datetime.strptime(p["datum_kraja"], "%d.%m.%Y")
+        )
     print("Kamate prije filtriranja:", get_kamate(tip_subjekta))
     # Filtriraj samo periode koji su unutar intervala izračuna
     kamatne_stope = [
@@ -518,6 +525,33 @@ def izracunaj_kamate(datum_pocetka, datum_kraja, iznos, tip_subjekta, moratorium
         if datetime.strptime(p["datum_pocetka"], "%d.%m.%Y") <= datum_kraja and
         datetime.strptime(p["datum_kraja"], "%d.%m.%Y") >= datum_pocetka
     ]
+    kamatne_stope.sort(key=lambda p: datetime.strptime(p["datum_pocetka"], "%d.%m.%Y"))
+    zadnji_kraj_filtriranih = None
+    if kamatne_stope:
+        zadnji_kraj_filtriranih = max(
+            datetime.strptime(p["datum_kraja"], "%d.%m.%Y") for p in kamatne_stope
+        )
+
+    treba_dodati_period = False
+    if zadnji_period_baze:
+        if not kamatne_stope:
+            treba_dodati_period = True
+        elif datum_kraja > zadnji_kraj_filtriranih:
+            treba_dodati_period = True
+
+    if treba_dodati_period and zadnji_period_baze:
+        if zadnji_kraj_filtriranih:
+            start_novog = max(datum_pocetka, zadnji_kraj_filtriranih + timedelta(days=1))
+        else:
+            start_novog = datum_pocetka
+
+        if start_novog <= datum_kraja:
+            kamatne_stope.append({
+                "datum_pocetka": start_novog.strftime("%d.%m.%Y"),
+                "datum_kraja": datum_kraja.strftime("%d.%m.%Y"),
+                "kamata": zadnji_period_baze["kamata"]
+            })
+            kamatne_stope.sort(key=lambda p: datetime.strptime(p["datum_pocetka"], "%d.%m.%Y"))
     print("Kamate nakon filtriranja:", kamatne_stope)
     # Osiguravam da prvi period ne počinje prije glavnice
     for period in kamatne_stope:
