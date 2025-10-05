@@ -1,0 +1,72 @@
+<div class="modal-dialog" data-modal="interest-update">
+    <button type="button" class="modal-close button button--icon _animate" data-dismiss="modal">
+        <img src="{{ url_for('static', filename='images/close.svg') }}" onload="SVGInject(this)" />
+        <span class="sr-only">Zatvori modal</span>
+    </button>
+    <header class="modal-header">
+        <h2 class="modal-title">Ažuriranje zakonskih zateznih kamata</h2>
+    </header>
+    <div class="modal-body">
+        <div class="alert alert--error" data-message="interest-update" hidden>
+            Format za unos datuma mora biti 01.01.2025 a za unos kamata 99.99
+        </div>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Datum početka</th>
+                    <th>Datum kraja</th>
+                    <th>Fizičke osobe</th>
+                    <th>Pravne osobe</th>
+                    <th>Radnje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if interest_periods %}
+                {% for period in interest_periods %}
+                <tr data-id="{{ period.id }}">
+                    <td>{{ period.datum_pocetka }}</td>
+                    <td>{{ period.datum_kraja }}</td>
+                    <td>{{ period.fizicke_osobe }}</td>
+                    <td>{{ period.pravne_osobe }}</td>
+                    <td class="table-actions">
+                        <button type="button" class="button button--tiny button--secondary"
+                            data-action="edit-interest-period">Uredi</button>
+                        <button type="button" class="button button--tiny button--plain"
+                            data-action="delete-interest-period">Obriši</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5">Trenutačno nema zapisa.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <form class="form" data-form="interest-period-create" method="post" autocomplete="off">
+            <div class="field">
+                <label class="field-label" for="new-period-start">Datum početka</label>
+                <input id="new-period-start" name="datum_pocetka" type="text" placeholder="01.01.2025"
+                    data-field="datum_pocetka" data-input="date-start">
+            </div>
+            <div class="field">
+                <label class="field-label" for="new-period-end">Datum kraja</label>
+                <input id="new-period-end" name="datum_kraja" type="text" placeholder="01.01.2025"
+                    data-field="datum_kraja" data-input="date-end">
+            </div>
+            <div class="field">
+                <label class="field-label" for="new-period-physical">Fizičke osobe</label>
+                <input id="new-period-physical" name="fizicke_osobe" type="text" placeholder="99.99"
+                    data-field="fizicke_osobe" data-input="rate-physical">
+            </div>
+            <div class="field">
+                <label class="field-label" for="new-period-legal">Pravne osobe</label>
+                <input id="new-period-legal" name="pravne_osobe" type="text" placeholder="99.99"
+                    data-field="pravne_osobe" data-input="rate-legal">
+            </div>
+            <div class="actions-toolbar">
+                <button type="submit" class="button button--primary button--tiny">Unesi</button>
+            </div>
+        </form>
+    </div>
+</div>
