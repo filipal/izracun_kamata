@@ -3495,6 +3495,7 @@ a.dark-bg:focus,a.dark-bg:hover {
 
 .stored-calculations-name button span {
     -webkit-line-clamp: 1;
+    line-clamp: 1;
     -webkit-box-orient: vertical;
     display: -webkit-box;
     max-width: 100%;
@@ -6161,7 +6162,8 @@ textarea.resize-vertical {
 }
 
 [type=number] {
-    -moz-appearance: textfield
+    -moz-appearance: textfield;
+    appearance: textfield;
 }
 
 [type=number]::-webkit-inner-spin-button,[type=number]::-webkit-outer-spin-button {
@@ -9003,6 +9005,7 @@ body.focus-mode:after {
 
 .slider-dot {
     -webkit-backface-visibility: visible;
+    backface-visibility: visible;
     background-color: #4aaaa5;
     border: 0;
     border-radius: 50%;
