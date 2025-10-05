@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="hr">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=360, initial-scale=1">
+    <meta name="description" content="Prikaz svih spremljenih izračuna">
+    <title>Spremljeni izračuni</title>
+
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" sizes="any">
+    <!-- <link rel="icon" href="{{ url_for('static', filename='images/icon.svg') }}" type="image/svg+xml"> -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <script src="{{ url_for('static', filename='js/svg-inject.js') }}"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="header-mainbar">
+            <div class="header-logo">
+                <a class="logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kalkulator" width="38"
+                        height="38" />
+                </a>
+            </div>
+            <nav id="js-navbar" class="navbar container">
+                <ul class="navbar-menu navbar-menu--primary">
+                    <li class="navbar-menu-item"><a>Kalkulator zateznih kamata</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="site-main">
+        <div class="site-messages container">
+            <div id="successMessage" class="site-messages container" style="display: none;">
+                <button id="closeMessage" class="button button--plain site-message-close" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" data-inject-url="{{ url_for('static', filename='images/close.svg') }}">
+                        <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </button>
+                <div class="site-message-content">
+                    <div class="alert alert--success">Izračun je izbrisan!</div>
+                </div>
+            </div>
+        </div>
+        <article class="type-widget container">
+            <header class="article-header">
+                <h1 class="article-title">Kalkulator zateznih kamata
+                    <span class="article-subtitle">
+                        Spremljeni izračuni
+                    </span>
+                </h1>
+                <a href="#" data-toggle="modal" data-target="attention" style="font-size: 1.125rem"
+                    class="sr-only">[saznajte više]</a>
+            </header>
+            <!-- 📌 Meni za navigaciju -->
+            <div class="calculation-menu">
+                <div class="dropdown">
+                    <button id="calculationPicker"
+                        class="is-active button button--tiny button--secondary calculations-picker button--chevron"
+                        data-toggle="dropdown" data-target="storedCalculations">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+                            data-inject-url="{{ url_for('static', filename='images/edit.svg') }}">
+                            <path
+                                d="M15.75 13.5L14.9999 14.3205C14.6021 14.7556 14.0626 15 13.5001 15C12.9376 15 12.3981 14.7556 12.0003 14.3205C11.6019 13.8863 11.0625 13.6425 10.5002 13.6425C9.93782 13.6425 9.39838 13.8863 9.00001 14.3205M2.25003 15H3.50594C3.87282 15 4.05627 15 4.2289 14.9585C4.38195 14.9218 4.52827 14.8612 4.66248 14.7789C4.81385 14.6862 4.94357 14.5565 5.20299 14.297L14.6251 4.87499C15.2464 4.25367 15.2464 3.24631 14.6251 2.62499C14.0037 2.00367 12.9964 2.00367 12.375 2.62499L2.95298 12.047C2.69355 12.3065 2.56383 12.4362 2.47107 12.5876C2.38883 12.7218 2.32822 12.8681 2.29148 13.0211C2.25003 13.1938 2.25003 13.3772 2.25003 13.7441V15Z"
+                                stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                stroke-linejoin="round"></path>
+                        </svg>
+                        <span class="text-truncate">Novi izračun</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+                            data-inject-url="{{ url_for('static', filename='images/chevron-down.svg') }}"
+                            class="dropdown-indicator">
+                            <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="currentColor" stroke-width="1.25"
+                                stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                    <!-- Dropdown content -->
+                    <div id="storedCalculations" class="dropdown-content" style="width: 320px">
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-menu-item dropdown-menu-item--bordered">
+                                <button
+                                    class="dropdown-menu-link dropdown-menu-link--condensed dropdown-menu-link--selected button button--plain"
+                                    onClick="window.location.href='/novi_izracun'">
+                                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        data-inject-url="{{ url_for('static', filename='images/check.svg') }}">
+                                        <path d="M15 4.5L6.75 12.75L3 9" stroke="currentColor" stroke-width="1.25"
+                                            stroke-linecap="round" stroke-linejoin="round"></path>
+                                    </svg>
+                                    <span class="text-truncate">Novi izračun</span>
+                                </button>
+                            </li>
+                            <!-- 🔹 Prikaz zadnjih 10 izračuna -->
+                            {% if izracuni %}
+                            {% for izracun in izracuni %}
+                            <li class="dropdown-menu-item dropdown-menu-item--bordered">
+                                <form method="POST" action="/ucitaj_izracun" class="calculation-load-form">
+                                    <input type="hidden" name="calculation-id" value="{{ izracun[0] }}">
+                                    <button type="submit"
+                                        class="button button--plain dropdown-menu-link dropdown-menu-link--condensed">
+                                        <span class="text-truncate">
+                                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M15 4.5L6.75 12.75L3 9" stroke="currentColor"
+                                                    stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                                                </path>
+                                            </svg>
+                                            {{ izracun[1] }}
+                                        </span>
+                                    </button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                            {% endif %}
+                        </ul>
+
+                        <!-- Footer sa linkom na sve izračune -->
+                        <div class="dropdown-content-footer">
+                            <a href="/izracuni"
+                                class="button button--plain dropdown-menu-link dropdown-menu-link--condensed">
+                                <span class="text-truncate">Svi spremljeni izračuni</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Gumnb za sve izračune -->
+                <a href="/izracuni" class="button button--secondary button--tiny">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none" data-inject-url="{{ url_for('static', filename='images/folder.svg') }}">
+                        <path d="M9.75 5.25L8.91334 3.57669C8.67255 3.0951 8.55215 2.8543 8.37253 2.67837C8.21368 2.5228 8.02224 2.40448 7.81206 2.33198C7.57437 2.25 7.30515 2.25 6.76672 2.25H3.9C3.05992 2.25 2.63988 2.25 2.31901 2.41349C2.03677 2.5573 1.8073 2.78677 1.66349 3.06901C1.5 3.38988 1.5 3.80992 1.5 4.65V5.25M1.5 5.25H12.9C14.1601 5.25 14.7902 5.25 15.2715 5.49524C15.6948 5.71095 16.039 6.05516 16.2548 6.47852C16.5 6.95982 16.5 7.58988 16.5 8.85V12.15C16.5 13.4101 16.5 14.0402 16.2548 14.5215C16.039 14.9448 15.6948 15.289 15.2715 15.5048C14.7902 15.75 14.1601 15.75 12.9 15.75H5.1C3.83988 15.75 3.20982 15.75 2.72852 15.5048C2.30516 15.289 1.96095 14.9448 1.74524 14.5215C1.5 14.0402 1.5 13.4101 1.5 12.15V5.25Z" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                    <span class="text-truncate">Svi izračuni</span>
+                    <span id="buttonCounter" class="button-counter">0</span>
+                </a>
+            </div>
+
+            <section class="section">
+                <div class="stored-calculations-top">
+                    <form class="form search-form" action="/pretrazi_izracune" method="GET" role="search"
+                        style="max-width: 460px">
+                        <input type="search" id="searchInput" name="query" value="" class=""
+                            placeholder="Pretraži izračune po nazivu...">
+                        <button type="submit" class="button button--primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                fill="none"
+                                data-inject-url="{{ url_for('static', filename='images/search-refraction.svg') }}">
+                                <path
+                                    d="M21 21L16.65 16.65M11 6C13.7614 6 16 8.23858 16 11M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z"
+                                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+                <!-- 📌 TABELA IZRAČUNA -->
+                <div class="stored-calculations">
+                    {% if query %}
+                    <div class="search-results">
+                        <span>Za upit '{{ query }}' pronađeno rezultata: {{ broj }}</span>
+                        <a href="/izracuni">Poništi pretragu</a>
+                    </div>
+                    {% endif %}
+                    {% if izracuni %}
+                    <!-- 🔹 Ako ima izračuna, prikazujemo tablicu -->
+                    <table class="table table--row-counter">
+                        <thead>
+                            <tr>
+                                <th class="text-center">R.br.</th>
+                                <th class="text-left">Naziv izračuna</th>
+                                <th>Datum</th>
+                                <th class="stored-calculations-actions"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for izracun in izracuni %}
+                            <tr data-calculation-id="{{ izracun[0] }}">
+                                <td class="text-center"></td>
+                                <td class="stored-calculations-name text-left">
+                                    <form method="POST" action="/ucitaj_izracun" data-form="calculation-load">
+                                        <input type="hidden" name="calculation-id" value="{{ izracun[0] }}">
+                                        <button type="submit" class="button button--pill" title="{{ izracun[1] }}">
+                                            <span>{{ izracun[1] }}</span>
+                                        </button>
+                                    </form>
+                                </td>
+                                <td>{{ izracun[2] }}</td>
+                                <td class="stored-calculations-actions">
+                                    <button class="button button--icon _animate tip" data-toggle="modal" aria-label="Izbriši izračun" data-target="delete-calculation/{{ izracun[0] }}">
+                                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                data-inject-url="{{ url_for('static', filename='images/trash.svg') }}">
+                                                <path
+                                                    d="M12 4.5V3.9C12 3.05992 12 2.63988 11.8365 2.31901C11.6927 2.03677 11.4632 1.8073 11.181 1.66349C10.8601 1.5 10.4401 1.5 9.6 1.5H8.4C7.55992 1.5 7.13988 1.5 6.81901 1.66349C6.53677 1.8073 6.3073 2.03677 6.16349 2.31901C6 2.63988 6 3.05992 6 3.9V4.5M2.25 4.5H15.75M14.25 4.5V12.9C14.25 14.1601 14.25 14.7902 14.0048 15.2715C13.789 15.6948 13.4448 16.039 13.0215 16.2548C12.5402 16.5 11.9101 16.5 10.65 16.5H7.35C6.08988 16.5 5.45982 16.5 4.97852 16.2548C4.55516 16.039 4.21095 15.6948 3.99524 15.2715C3.75 14.7902 3.75 14.1601 3.75 12.9V4.5"
+                                                    stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                                    stroke-linejoin="round"></path>
+                                            </svg>
+                                            <span class="sr-only">Izbriši izračun</span>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <!-- 🔹 Ako NEMA izračuna, prikaži ikonu i poruku -->
+                    <div class="stored-calculations">
+                        <div class="stored-calculations-container">
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                data-inject-url="{{ url_for('static', filename='images/folder.svg') }}">
+                                <path
+                                    d="M9.75 5.25L8.91334 3.57669C8.67255 3.0951 8.55215 2.8543 8.37253 2.67837C8.21368 2.5228 8.02224 2.40448 7.81206 2.33198C7.57437 2.25 7.30515 2.25 6.76672 2.25H3.9C3.05992 2.25 2.63988 2.25 2.31901 2.41349C2.03677 2.5573 1.8073 2.78677 1.66349 3.06901C1.5 3.38988 1.5 3.80992 1.5 4.65V5.25M1.5 5.25H12.9C14.1601 5.25 14.7902 5.25 15.2715 5.49524C15.6948 5.71095 16.039 6.05516 16.2548 6.47852C16.5 6.95982 16.5 7.58988 16.5 8.85V12.15C16.5 13.4101 16.5 14.0402 16.2548 14.5215C16.039 14.9448 15.6948 15.289 15.2715 15.5048C14.7902 15.75 14.1601 15.75 12.9 15.75H5.1C3.83988 15.75 3.20982 15.75 2.72852 15.5048C2.30516 15.289 1.96095 14.9448 1.74524 14.5215C1.5 14.0402 1.5 13.4101 1.5 12.15V5.25Z"
+                                    stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                    stroke-linejoin="round"></path>
+                            </svg>
+                            <p>Nemate spremljenih izračuna.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </section>
+        </article>
+    </main>
+
+    <aside id="modal" class="modal" role="dialog"></aside>
+
+    <footer class="site-footer container">
+        <div class="copyright">
+            FiliPal © 2025. Sva prava pridržana.
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/svg-inject.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js', v=time) }}"></script>
+</body>
+
+</html>

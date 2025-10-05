@@ -1,0 +1,20 @@
+<div class="modal-dialog modal-dialog--compact">
+    <button type="button" class="modal-close button button--icon _animate" data-dismiss="modal">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        <span class="sr-only">Zatvori modal</span>
+    </button>
+    <div class="modal-body">
+        <p>Ova akcija je nepovratna. Brisanjem izračuna više nećete moći povratiti unesene podatke.</p>
+        <p>Želite li izbrisati izračun <strong>#{{ izracun_id }}</strong>?</p>
+        <form id="deleteForm" method="POST" data-form="calculation-delete">
+            <input type="hidden" id="deleteCalculationId" name="calculation-id" value="{{ izracun_id }}">
+            <input type="hidden" name="_method" value="DELETE">
+            <div class="actions-toolbar" style="justify-content: space-between">
+                <button type="button" class="button button--plain button--link" data-dismiss="modal">Odustani</button>
+                <button type="submit" class="button button--primary">Da, izbriši izračun</button>
+            </div>
+        </form>
+    </div>
+</div>

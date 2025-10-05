@@ -1,0 +1,43 @@
+    <div class="modal-offcanvas">
+        <button type="button" class="modal-close button button--icon _animate" data-dismiss="modal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                data-inject-url="{{ url_for('static', filename='images/close.svg') }}">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                   stroke-linejoin="round"></path>
+            </svg>
+            <span class="sr-only">Zatvori modal</span>
+        </button>
+        <header class="modal-header">
+            <h2 class="modal-title">Upute za unos podataka</h2>
+        </header>
+        <div class="modal-body">
+            <p>Ovaj način je namijenjen korisnicima koja imaju veću količinu podataka, bilo da su to glavnice ili uplate ili
+                i jedno i drugo. Mehanizam provjere ispravnosti unesenih podataka je ograničen i zato je važno pratiti
+                sljedeće upute za unos.</p>
+            <figure>
+                <picture>
+                    <source type="image/avif" srcset="{{ url_for('static', filename='images/instructions/example.avif') }} 1x">
+                    <source type="image/webp" srcset="{{ url_for('static', filename='images/instructions/example.webp') }} 1x">
+                    <img src="{{ url_for('static', filename='images/instructions/example.png') }}"
+                        srcset="{{ url_for('static', filename='images/instructions/example.png') }} 1x" alt="Izračun plaće"
+                        fetchpriority="high" width="512" height="240">
+                </picture>
+                <figcaption>Podaci za izračun zateznih kamata - primjer unosa</figcaption>
+            </figure>
+            <br><br>
+            <ul class="list-bulleted-fancy">
+                <li><span>Podržani formati datoteka: <strong>xlsx, xls, csv, ods</strong>.</span></li>
+                <li><span>Za unos podataka koristite <strong>prve četiri kolone: A, B, C i D</strong>.</span></li>
+                <li><span>U kolonu A upisujete <strong>osnovu za plaćanje</strong>.</span></li>
+                <li><span>U kolonu B unosite izraz <strong>"uplata" ili "glavnica"</strong> (u jednini i bez navodnika). Ako
+                        vam je lakše i/ili preglednije možete koristiti velika slova ili početno veliko slovo.</span></li>
+                <li><span>U kolonu C unosite iznose glavnice odnosno uplate. Za odvajanje decimala možete koristiti točku
+                        ili zarez, ali nikad ne koristite oboje kao npr. 2.500,00. Primjer ispravnog unosa je
+                        <strong>2500,00 ili 2500.00</strong>, bez valute.</span></li>
+                <li><span>Kolona D je rezervirana za datume u formatu <strong> dd.mm.gggg </strong>kao npr. 17.04.2023</span></li>
+            </ul>
+            <p>Ostale kolone možete koristiti za bilješke.  Te kolone se neće uzimati u obzir prilikom izračuna.</p>
+            <p>Za lakši početak <a href="{{ url_for('static', filename='predlozak_zat-kamata.csv') }}" download>
+                    <strong>preuzmite predložak</strong></a>, i zamijenite postojeće vrijednosti vašim podacima.</p>
+        </div>
+    </div>

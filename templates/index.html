@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="hr">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=360, initial-scale=1">
+    <meta name="description"
+        content="Izračun zakonskih zateznih kamata prema stopama koje su važile u razdoblju na koje se obračun odnosi. Omogućen je unos više glavnica, uplata i troškova ovrhe.">
+    <title>Kalkulator zateznih kamata</title>
+
+    <link rel="icon" href="{{ url_for('static', filename='images/logo.png') }}" sizes="any">
+    <!-- <link rel="icon" href="{{ url_for('static', filename='images/icon.svg') }}" type="image/svg+xml"> -->
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+    <!-- <script src="/assets/js/app.js" defer></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="{{ url_for('static', filename='js/svg-inject.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flatpickr.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/flatpickr/hr.js') }}"></script>
+    <!-- <script src="{{ url_for('static', filename='js/main.js') }}"></script> -->
+</head>
+
+<body>
+    <noscript class="js-disabled open">
+        <div class="js-disabled-msg">Za korištenje aplikacije Kalkulator potrebno je uključiti <br> JavaScript u
+            postavkama web preglednika.</div>
+    </noscript>
+    <header class="site-header">
+
+        <div class="header-mainbar">
+            <div class="header-logo">
+                <a class="logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Kalkulator" width="38"
+                        height="38" />
+                </a>
+            </div>
+            <nav id="js-navbar" class="navbar container">
+                <ul class="navbar-menu navbar-menu--primary">
+                    <li class="navbar-menu-item">
+                        <a>Kalkulator zateznih kamata</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main class="site-main">
+        <div class="site-messages container">
+            <div id="successMessage" class="site-messages container" style="display: none;">
+                <button id="closeMessage" class="button button--plain site-message-close" aria-label="Close">
+                    <img src="{{ url_for('static', filename='images/close.svg') }}" onload="SVGInject(this)" />
+                </button>
+                <div class="site-message-content">
+                    <div class="alert alert--success">Izračun je spremljen!</div>
+                </div>
+            </div>
+        </div>
+        <article class="type-widget container">
+            <div id="focusModeIndicator" class="focus-mode-indicator" hidden>
+                <span>Fokus prikaz aktivan – pritisnite <strong>Esc</strong> za izlaz</span>
+            </div>
+            <header class="article-header">
+                <h1 class="article-title" data-toggle="exposable" data-target="calculatorTail">Kalkulator zateznih
+                    kamata</h1>
+            </header>
+            <div id="calculatorTail" class="exposable">
+                <div class="overflow-hidden">
+                    <p class="no-margin">Kalkulator zateznih kamata služi za izračun zakonskih zateznih kamata prema
+                        <button type="button" class="button--link" data-toggle="modal"
+                            data-target="interest-rates-list">kamatnim stopama</button> koje su važile u razdoblju na
+                        koje se obračun kamata odnosi. Kalkulator podržava unos više glavnica, uplata kao i troškova
+                        ovrhe.
+                    </p>
+                </div>
+            </div>
+            <div class="calculation-menu">
+                <div class="dropdown">
+                    <button id="calculationPicker"
+                        class="button button--tiny button--secondary calculations-picker button--chevron"
+                        data-toggle="dropdown" data-target="storedCalculations">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+                            data-inject-url="{{ url_for('static', filename='images/edit.svg') }}">
+                            <path
+                                d="M15.75 13.5L14.9999 14.3205C14.6021 14.7556 14.0626 15 13.5001 15C12.9376 15 12.3981 14.7556 12.0003 14.3205C11.6019 13.8863 11.0625 13.6425 10.5002 13.6425C9.93782 13.6425 9.39838 13.8863 9.00001 14.3205M2.25003 15H3.50594C3.87282 15 4.05627 15 4.2289 14.9585C4.38195 14.9218 4.52827 14.8612 4.66248 14.7789C4.81385 14.6862 4.94357 14.5565 5.20299 14.297L14.6251 4.87499C15.2464 4.25367 15.2464 3.24631 14.6251 2.62499C14.0037 2.00367 12.9964 2.00367 12.375 2.62499L2.95298 12.047C2.69355 12.3065 2.56383 12.4362 2.47107 12.5876C2.38883 12.7218 2.32822 12.8681 2.29148 13.0211C2.25003 13.1938 2.25003 13.3772 2.25003 13.7441V15Z"
+                                stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                stroke-linejoin="round"></path>
+                        </svg>
+                        <span class="text-truncate" id="calculationName" data-naziv="{{ session.get('aktivni_izracun', 'Novi izračun') }}">{{ session.get('aktivni_izracun', 'Novi izračun') }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none"
+                            data-inject-url="{{ url_for('static', filename='images/chevron-down.svg') }}"
+                            class="dropdown-indicator">
+                            <path d="M4.5 6.75L9 11.25L13.5 6.75" stroke="currentColor" stroke-width="1.25"
+                                stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                    <!-- Dropdown content -->
+                    <div id="storedCalculations" class="dropdown-content" style="width: 320px">
+                        <ul class="dropdown-menu">
+                            <li class="dropdown-menu-item dropdown-menu-item--bordered">
+                                <form method="GET" action="/novi_izracun">
+                                    <button type="submit"
+                                        class="dropdown-menu-link dropdown-menu-link--condensed button button--plain"
+                                        data-name="Novi izračun">
+                                        <svg class="check-icon" style="visibility: hidden;" width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            data-inject-url="{{ url_for('static', filename='images/check.svg') }}">
+                                            <path d="M15 4.5L6.75 12.75L3 9" stroke="currentColor" stroke-width="1.25"
+                                                stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </svg>
+                                        <span class="text-truncate">Novi izračun</span>
+                                    </button>
+                                </form>
+                            </li>
+                            <!-- 🔹 Prikaz zadnjih 10 izračuna -->
+                            {% if izracuni %}
+                            {% for izracun in izracuni %}
+                            <li class="dropdown-menu-item dropdown-menu-item--bordered">
+                                <form method="POST" action="/ucitaj_izracun" class="calculation-load-form">
+                                    <input type="hidden" name="calculation-id" value="{{ izracun[0] }}">
+                                    <input type="hidden" name="calculation-naziv" value="{{ izracun[1] }}">
+                                    <button type="submit"
+                                        class="button button--plain dropdown-menu-link dropdown-menu-link--condensed" data-name="{{ izracun[1] }}">
+                                            <svg class="check-icon" style="visibility: hidden;" width="18" height="18" viewBox="0 0 18 18" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M15 4.5L6.75 12.75L3 9" stroke="currentColor"
+                                                    stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+                                                </path>
+                                            </svg>
+                                        <span class="text-truncate">{{ izracun[1] }}</span>
+                                    </button>
+                                </form>
+                            </li>
+                            {% endfor %}
+                            {% endif %}
+                        </ul>
+
+                        <!-- Footer sa linkom na sve izračune -->
+                        <div class="dropdown-content-footer">
+                            <a href="/izracuni"
+                                class="button button--plain dropdown-menu-link dropdown-menu-link--condensed">
+                                <span class="text-truncate">Svi spremljeni izračuni</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gumnb za sve izračune -->
+                <a href="/izracuni" class="button button--secondary button--tiny">
+                    <img src="{{ url_for('static', filename='images/folder.svg') }}" onload="SVGInject(this)" />
+                    <span class="text-truncate">Svi izračuni</span>
+                    <span id="buttonCounter" class="button-counter">0</span>
+                </a>
+            </div>
+
+
+            <section class="section input" data-input="interest">
+
+                <form id="form" class="form form--calculation" enctype="multipart/form-data" action="/izracun"
+                    method="POST" data-form="interest" autocomplete="off">
+                    <div id="errorAlert" class="alert alert--error" style="display: none;">Ispravite naznačene pogreške i pokušajte ponovno.</div>
+                    <input type="hidden" name="_token" value="">
+                    <div class="fieldset-wrapper">
+                        <fieldset class="calculation-settings">
+                            <input type="hidden" id="calculation-id" name="calculation-id" value="">
+                            <legend class="legend">Postavke izračuna</legend>
+                            <div class="field">
+                                <label class="field-label" for="calculation-name">Naziv obračuna</label>
+                                <input type="text" id="calculation-name" name="calculation-name" value=""
+                                    placeholder="npr. Ovr 123/2025-01">
+                                <span class="invalid-feedback" data-error-message="Ovo polje je obavezno." style="display: none;">Ovo polje je obavezno.</span>
+                                <span class="field-note" hidden>Ovo polje je obavezno ako želite spremiti izračun za
+                                    kasnije.</span>
+                            </div>
+                            <div class="field date">
+                                <label class="field-label" for="datepicker0">Datum obračuna kamata
+                                    <span class="tooltip"
+                                        data-tip="Datum obračuna kamata mora biti najmanje jedan dan iza datuma dospijeća duga.">
+                                        <img src="{{ url_for('static', filename='images/info.svg') }}"
+                                            onload="SVGInject(this)" />
+                                    </span>
+                                </label>
+                                <input type="text" id="datepicker0" class="datepicker has-icon has-icon--calendar"
+                                    name="calculation-date" placeholder="DD.MM.YYYY">
+                            </div>
+                            <div class="field currency">
+                                <label class="field-label" for="currency-list">Valuta</label>
+                                <select id="currency-list" class="js-currency-list" name="calculation-currency">
+                                    <option value="EUR" selected="selected">EUR - euro</option>
+                                    <option value="HRK">HRK - hrvatska kuna</option>
+                                    <option value="AUD">AUD - australski dolar</option>
+                                    <option value="CAD">CAD - kanadski dolar</option>
+                                    <option value="CZK">CZK - češka kruna</option>
+                                    <option value="DKK">DKK - danska kruna</option>
+                                    <option value="HUF">HUF - mađarska forinta</option>
+                                    <option value="JPY">JPY - japanski jen</option>
+                                    <option value="NOK">NOK - norveška kruna</option>
+                                    <option value="SEK">SEK - švedska kruna</option>
+                                    <option value="CHF">CHF - švicarski franak</option>
+                                    <option value="GBP">GBP - britanska funta</option>
+                                    <option value="USD">USD - američki dolar</option>
+                                    <option value="PLN">PLN - poljski zlot</option>
+                                </select>
+                            </div>
+                            <div class="field-group" style="margin-bottom: 1.5625rem">
+                                <span class="field-group-title">Vrsta obračuna</span>
+                                <div class="field-option">
+                                    <input id="natural" type="radio" name="calculation-type" value="natural-person"
+                                        checked="checked">
+                                    <label class="field-option-label" for="natural">Obračun zateznih kamata
+                                        za&nbsp;<span class="nowrap">fizičku osobu</span></label>
+                                </div>
+                                <div class="field-option">
+                                    <input id="legal" type="radio" name="calculation-type" value="legal-entity">
+                                    <label class="field-option-label" for="legal">Obračun zateznih kamata za&nbsp;<span
+                                            class="nowrap">pravnu osobu</span></label>
+                                </div>
+                            </div>
+                            <div class="field moratorium">
+                                <span class="field-group-title">Zastoj tijeka zateznih kamata</span>
+                                <div class="field-option">
+                                    <input type="checkbox" name="moratorium" id="moratorium" value="on">
+                                    <label for="moratorium" class="field-option-label">Uključi obustavu na izračun zzk
+                                        od 18.4.2020 do 18.10.2020</label>
+                                </div>
+                                <p class="field-note">Prema Zakonu o provedbi ovrhe na novčanim sredstvima. 
+                                    <a data-toggle="modal" href="#" data-target="moratorium">Saznaj više</a>
+                                </p>
+                            </div>
+                        </fieldset>
+                        <fieldset class="calculation-printdata">
+                            <legend class="legend">Podaci za ispis (opcionalno)</legend>
+                            <div class="accordion" data-accordion='{"activeClass": "is-active", "multiExpand": false}'>
+                                <div class="panel" data-accordion-item>
+                                    <div class="panel-heading">Opis obračuna <span class="accordion-icon">+</span></div>
+                                    <div class="panel-content">
+                                        <div class="panel-content-inner">
+                                            <div class="field">
+                                                <label class="field-label" for="calculation-description">Opis
+                                                    obračuna</label>
+                                                <textarea id="calculation-description" name="calculation-description"
+                                                    class="resize-vertical"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel" data-accordion-item>
+                                    <div class="panel-heading">Podaci za vjerovnika<span class="accordion-icon">+</span>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="panel-content-inner">
+                                            <div class="field field-inline-label party">
+                                                <label class="field-label" for="creditor-name">Naziv</label>
+                                                <input type="text" id="creditor-name" name="creditor-name"
+                                                    placeholder="Abeceda d.d." value="">
+                                            </div>
+                                            <div class="field field-inline-label address">
+                                                <label class="field-label" for="creditor-address">Adresa</label>
+                                                <input type="text" id="creditor-address" name="creditor-address"
+                                                    placeholder="Avenija Dubrovnik 12" value="">
+                                            </div>
+                                            <div class="field field-inline-label city">
+                                                <label class="field-label" for="creditor-city">Mjesto</label>
+                                                <input type="text" id="creditor-city" name="creditor-city"
+                                                    placeholder="10000 Zagreb" value="">
+                                            </div>
+                                            <div class="field field-inline-label oib">
+                                                <label class="field-label" for="creditor-oib">OIB</label>
+                                                <input type="text" id="creditor-oib" class="" name="creditor-oib"
+                                                    placeholder="" value="" minlength="11" maxlength="11">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="panel" data-accordion-item>
+                                    <div class="panel-heading">Podaci za dužnika<span class="accordion-icon">+</span>
+                                    </div>
+                                    <div class="panel-content">
+                                        <div class="panel-content-inner">
+                                            <div class="field field-inline-label party">
+                                                <label class="field-label" for="debtor-name">Naziv</label>
+                                                <input type="text" id="debtor-name" name="debtor-name"
+                                                    placeholder="Acme d.o.o za trgovinu i usluge" value="">
+                                            </div>
+                                            <div class="field field-inline-label address">
+                                                <label class="field-label" for="debtor-address">Adresa </label>
+                                                <input type="text" id="debtor-address" name="debtor-address"
+                                                    placeholder="Vukovarska 48" value="">
+                                            </div>
+                                            <div class="field field-inline-label city">
+                                                <label class="field-label" for="debtor-city">Mjesto</label>
+                                                <input type="text" id="debtor-city" name="debtor-city"
+                                                    placeholder="10000 Zagreb" value="">
+                                            </div>
+                                            <div class="field field-inline-label oib">
+                                                <label class="field-label" for="debtor-oib">OIB</label>
+                                                <input type="text" id="debtor-oib" class="" name="debtor-oib"
+                                                    placeholder="" value="" minlength="11" maxlength="11">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                        <fieldset class="calculation-entries">
+                            <legend class="legend">Podaci za izračun</legend>
+                            <div class="actions-toolbar ">
+                                <div class="data-upload-toggle">
+                                    <button class="button button-plain button--tiny data-upload-toggle-button"
+                                        type="button" data-toggle="collapsible" data-target="js-data-upload">
+                                        <span class="toggle-knob"></span><span>Uvezi podatke</span>
+                                    </button>
+                                </div>
+                                <button type="button" class="button button--pill button--small" data-item-bill-add>
+                                    <img src="{{ url_for('static', filename='images/plus-circle.svg') }}"
+                                        onload="SVGInject(this)" />
+                                    <div class="hide-for-medium"><span>Dodaj stavku</span></div>
+                                    <div class="show-for-medium"><span>Dodaj osnovu za plaćanje</span></div>
+                                </button>
+                            </div>
+                            <div id="js-data-upload" class="collapsible collapsed">
+                                <div class="collapsible-inner">
+                                    <div class="data-upload-inner">
+                                        <p class="data-upload-instructions">Pravila za ispravan unos podataka možete
+                                            naći u <button class="button button--link" data-toggle="modal"
+                                                data-target="instructions"><strong>Uputama za unos
+                                                    podataka</strong></button>.</p>
+                                        <div class="data-upload-steps">
+                                            <div class="data-upload-step">
+                                                <div class="step-header show-for-medium">
+                                                    <img src="{{ url_for('static', filename='images/file.svg') }}"
+                                                        onload="SVGInject(this)" />
+                                                    <span>Predložak</span>
+                                                </div>
+                                                <p class="step-description">Kako bi podaci bili ispravno uneseni i
+                                                    formatirani preuzmite <a
+                                                        href="{{ url_for('static', filename='predlozak_zat-kamata.csv') }}"
+                                                        download><strong>predložak</strong></a> u koji ćete unijeti
+                                                    podatke potrebne za izračun.</p>
+                                                    <div class="step-action">
+                                                        <a href="{{ url_for('static', filename='predlozak_zat-kamata.csv') }}" class="button button--pill button--small" download>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                                                <path d="M15.75 15.75H2.25M13.5 8.25L9 12.75M9 12.75L4.5 8.25M9 12.75V2.25" stroke="currentColor"
+                                                                    stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                            </svg>
+                                                            <span>Preuzmi predložak</span>
+                                                        </a>
+                                                    </div>
+                                            </div>
+                                            <div class="data-upload-step">
+                                                <div class="step-header show-for-medium">
+                                                    <img src="{{ url_for('static', filename='images/file-add.svg') }}"
+                                                        onload="SVGInject(this)" />
+                                                    <span>Podaci za izračun</span>
+                                                </div>
+                                                <p class="step-description">Učitajte datoteku s vašeg računala u koju
+                                                    ste prethodno unijeli podatke za izračun. Podržani formati su:
+                                                    <strong>xlsx, xls, csv i ods</strong>.
+                                                </p>
+                                                <div class="step-action">
+                                                    <label for="fileSelect" class="button button--pill button--small">
+                                                        <img src="{{ url_for('static', filename='images/folder.svg') }}"
+                                                            onload="SVGInject(this)" />
+                                                        <span>Izaberi datoteku</span>
+                                                        <input type="file" id="fileSelect" name="fileSelect"  accept=".csv,.xlsx,.xls,.ods">
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div id="successMsg" class="data-upload-success" hidden>
+                                            <img src="{{ url_for('static', filename='images/check.svg') }}"
+                                                onload="SVGInject(this)" />
+                                            <span id="dataFilename"></span>
+                                        </div>
+                                        <div id="parseData" class="data-upload-insert">
+                                            <span>Učitaj podatke iz datoteke</span>
+                                            <img src="{{ url_for('static', filename='images/arrow-right.svg') }}"
+                                                onload="SVGInject(this)" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="calculation-entries-header show-for-large">
+                                <span class="_counter">R.br.</span>
+                                <span class="_name">Osnova za plaćanje</span>
+                                <span class="_amount">Iznos</span>
+                                <span class="_date">Datum</span>
+                                <span class="_actions"></span>
+                            </div>
+                            <div class="calculation-entries-body">
+                                <div class="calculation-entry">
+                                    <div class="_principal">
+                                        <div class="calculation-entry-field _counter"></div>
+                                        <div class="calculation-entry-field _name">
+                                            <label class="field-label">Osnova za plaćanje</label>
+                                            <input class="js-calculationDescription"
+                                                name="calculation[0][principal][description]" value="Račun 123"
+                                                type="text"
+                                                placeholder="npr. Račun za usluge razvoja web rješenja br. 123-2016">
+                                            <input class="js-calculationItem" name="calculation[0][principal][item]"
+                                                type="hidden" value="principal">
+                                        </div>
+                                        <div class="calculation-entry-field _amount">
+                                            <label class="field-label has-helper" data-field="HRK">Iznos</label>
+                                            <input class="js-calculationAmount js-with-decimals"
+                                                name="calculation[0][principal][amount]" type="number"
+                                                placeholder="npr. 15 000,00">
+                                        </div>
+                                        <div class="calculation-entry-field _date">
+                                            <label class="field-label">Datum dospijeća</label>
+                                            <input class="js-calculationDate datepicker has-icon has-icon--calendar"
+                                                name="calculation[0][principal][date]" type="text"
+                                                placeholder="npr. 1.12.2014" value="">
+                                        </div>
+                                        <div class="calculation-entry-field _actions">
+                                            <button type="button" class="button button--pill button--tiny"
+                                                data-item-payment-add>
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 18 18" fill="none"
+                                                    data-inject-url="{{ url_for('static', filename='images/plus-circle.svg') }}">
+                                                    <path
+                                                        d="M9 6V12M6 9H12M16.5 9C16.5 13.1421 13.1421 16.5 9 16.5C4.85786 16.5 1.5 13.1421 1.5 9C1.5 4.85786 4.85786 1.5 9 1.5C13.1421 1.5 16.5 4.85786 16.5 9Z"
+                                                        stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                                        stroke-linejoin="round"></path>
+                                                </svg>
+                                                <span>Uplata</span>
+                                            </button>
+                                            <button type="button" class="button button--icon _animate _small tip"
+                                                data-item-bill-copy aria-label="Kopiraj stavku">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 18 18" fill="none"
+                                                    data-inject-url="{{ url_for('static', filename='images/copy.svg') }}">
+                                                    <path
+                                                        d="M12 12V14.1C12 14.9401 12 15.3601 11.8365 15.681C11.6927 15.9632 11.4632 16.1927 11.181 16.3365C10.8601 16.5 10.4401 16.5 9.6 16.5H3.9C3.05992 16.5 2.63988 16.5 2.31901 16.3365C2.03677 16.1927 1.8073 15.9632 1.66349 15.681C1.5 15.3601 1.5 14.9401 1.5 14.1V8.4C1.5 7.55992 1.5 7.13988 1.66349 6.81901C1.8073 6.53677 2.03677 6.3073 2.31901 6.16349C2.63988 6 3.05992 6 3.9 6H6M8.4 12H14.1C14.9401 12 15.3601 12 15.681 11.8365C15.9632 11.6927 16.1927 11.4632 16.3365 11.181C16.5 10.8601 16.5 10.4401 16.5 9.6V3.9C16.5 3.05992 16.5 2.63988 16.3365 2.31901C16.1927 2.03677 15.9632 1.8073 15.681 1.66349C15.3601 1.5 14.9401 1.5 14.1 1.5H8.4C7.55992 1.5 7.13988 1.5 6.81901 1.66349C6.53677 1.8073 6.3073 2.03677 6.16349 2.31901C6 2.63988 6 3.05992 6 3.9V9.6C6 10.4401 6 10.8601 6.16349 11.181C6.3073 11.4632 6.53677 11.6927 6.81901 11.8365C7.13988 12 7.55992 12 8.4 12Z"
+                                                        stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                                        stroke-linejoin="round"></path>
+                                                </svg>
+                                            </button>
+                                            <button type="button" class="button button--icon _animate _small tip"
+                                                data-item-bill-remove="" disabled="" aria-label="Izbriši stavku">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
+                                                    viewBox="0 0 18 18" fill="none"
+                                                    data-inject-url="{{ url_for('static', filename='images/trash.svg') }}">
+                                                    <path
+                                                        d="M12 4.5V3.9C12 3.05992 12 2.63988 11.8365 2.31901C11.6927 2.03677 11.4632 1.8073 11.181 1.66349C10.8601 1.5 10.4401 1.5 9.6 1.5H8.4C7.55992 1.5 7.13988 1.5 6.81901 1.66349C6.53677 1.8073 6.3073 2.03677 6.16349 2.31901C6 2.63988 6 3.05992 6 3.9V4.5M2.25 4.5H15.75M14.25 4.5V12.9C14.25 14.1601 14.25 14.7902 14.0048 15.2715C13.789 15.6948 13.4448 16.039 13.0215 16.2548C12.5402 16.5 11.9101 16.5 10.65 16.5H7.35C6.08988 16.5 5.45982 16.5 4.97852 16.2548C4.55516 16.039 4.21095 15.6948 3.99524 15.2715C3.75 14.7902 3.75 14.1601 3.75 12.9V4.5"
+                                                        stroke="currentColor" stroke-width="1.25" stroke-linecap="round"
+                                                        stroke-linejoin="round"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    <div class="actions-toolbar">
+                        <button type="submit" class="button button--primary button--large" name="formAction">Izračunaj zatezne kamate</button>
+                    </div>
+                </form>
+            </section>
+
+
+
+            <section id="calculation-result" class="section output interests" data-output="interest" data-tabpanel="interest" data-state="idle">
+                <div id="taskbar" class="taskbar">
+                    <div class="dropdown">
+                        <button class="button button--pill-ghost button--tiny button--chevron" data-toggle="dropdown"
+                            data-target="saveCalculation">
+                            <span>Spremi izračun</span>
+                            <img src="{{ url_for('static', filename='images/chevron-down.svg') }}"
+                                onload="SVGInject(this)" class="dropdown-indicator" />
+                        </button>
+                        <div id="saveCalculation" class="dropdown-content" style="min-width: 200px">
+                            <ul class="dropdown-menu">
+                                <li class="dropdown-menu-item">
+                                    <button id="storeCalculation" class="dropdown-menu-link button--plain">
+                                        <img src="{{ url_for('static', filename='images/save.svg') }}"
+                                            onload="SVGInject(this)" />
+                                        <span>Spremi</span>
+                                    </button>
+                                </li>
+                                <li class="dropdown-menu-item">
+                                    <button class="dropdown-menu-link button--plain" data-generate="pdf"
+                                        data-download="pdf">
+                                        <img src="{{ url_for('static', filename='images/pdf-export.svg') }}"
+                                            onload="SVGInject(this)" />
+                                        <span>Izvezi u PDF</span>
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <button class="button button--pill-ghost button--tiny" data-generate="pdf">Prikaži PDF</button>
+                    <div class="taskbar-fabs">
+                        <a href="{{ url_for('preuzmi_csv') }}" class="button button--pill-ghost button--tiny">
+                            <img src="{{ url_for('static', filename='images/download.svg') }}" onload="SVGInject(this)" />
+                            <span>Preuzmi CSV</span>
+                        </a>
+                        <div class="dropdown show-for-medium">
+                            <button class="button button--icon _animate tip" data-toggle="dropdown"
+                                data-target="tableDisplay" aria-label="Prilagodi prored">
+                                <img src="{{ url_for('static', filename='images/paragraph-spacing.svg') }}"
+                                    onload="SVGInject(this)" />
+                            </button>
+                            <div id="tableDisplay" class="dropdown-content dropdown-content--right"
+                                style="min-width: 200px">
+                                <header class="dropdown-content-header">Prilagodi prored</header>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-menu-item">
+                                        <button type="button" class="button dropdown-menu-link"
+                                            data-display="condensed">
+                                            <span>Jednostruki</span>
+                                        </button>
+                                    </li>
+                                    <li class="dropdown-menu-item">
+                                        <button type="button" class="button dropdown-menu-link"
+                                            data-display="proportional">
+                                            <span>Proporcionalni</span>
+                                        </button>
+                                    </li>
+                                    <li class="dropdown-menu-item">
+                                        <button type="button" class="button dropdown-menu-link" data-display="relaxed">
+                                            <span>Dvostruki</span>
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button class="button button--icon _animate tip" aria-label="Novi izračun" data-page-reload>
+                            <img src="{{ url_for('static', filename='images/refresh.svg') }}"
+                                onload="SVGInject(this)" />
+                        </button>
+                        <div class="show-for-medium">
+                            <button id="triggerFocusMode" class="button button--icon _animate tip"
+                                aria-label="Otvori puni zaslon" data-toggle="focus-mode">
+                                <img src="{{ url_for('static', filename='images/expand.svg') }}"
+                                    onload="SVGInject(this)" />
+                            </button>
+                            <button id="triggerFocusMode" class="button button--icon _animate tip"
+                                aria-label="Zatvori zaslon" data-toggle="focus-mode" hidden>
+                                <img src="{{ url_for('static', filename='images/close.svg') }}"
+                                    onload="SVGInject(this)" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="calculation-result"></div>
+            </section>
+
+            <section class="section output foreclosure" data-output="foreclosure" data-tabpanel="foreclosure"
+                data-state="idle">
+                <div class="calculation-result"></div>
+                <div class="actions-toolbar">
+                    <button onClick="location.reload();" class="button button--link">Novi obračun</button>
+                    <button class="button button--primary _w160" data-generate="pdf"><span>Preuzmi PDF</span></button>
+                </div>
+            </section>
+        </article>
+    </main>
+    <aside id="modal" class="modal" role="dialog"></aside>
+
+    <footer class="site-footer container">
+        <div class="copyright">
+            FiliPal © 2025. Sva prava pridržana.
+        </div>
+    </footer>
+
+    {% if ucitani_izracun %}
+    <script>
+        window.ucitaniIzracun = {{ ucitani_izracun | tojson | safe }};
+    </script>
+    {% endif %}
+    
+    <script src="{{ url_for('static', filename='js/main.js', v=time) }}"></script>
+    <script src="{{ url_for('static', filename='js/focus-mode.js') }}"></script>
+</body>
+
+</html>

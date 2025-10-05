@@ -1,0 +1,30 @@
+<div class="calculation-entry">
+    <div class="_principal">
+        <div class="calculation-entry-field _counter"></div>
+        <div class="calculation-entry-field _name">
+            <label class="field-label">Osnova za plaćanje</label>
+            <input class="js-calculationDescription" name="" value="" type="text" placeholder="npr. Račun za usluge">
+            <input class="js-calculationItem" name="" type="hidden" value="principal">
+        </div>
+        <div class="calculation-entry-field _amount">
+            <label class="field-label has-helper" data-field="HRK">Iznos</label>
+            <input class="js-calculationAmount js-with-decimals" name="" type="number" placeholder="npr. 15 000,00" value="">
+        </div>
+        <div class="calculation-entry-field _date">
+            <label class="field-label">Datum dospijeća</label>
+            <input class="js-calculationDate datepicker has-icon has-icon--calendar" name="" type="text" placeholder="npr. 1.12.2014" value="">
+        </div>
+        <div class="calculation-entry-field _actions">
+            <button type="button" class="button button--pill button--tiny" data-item-payment-add>
+                <img src="{{ url_for('static', filename='images/plus-circle.svg') }}" onload="SVGInject(this)" />
+                <span>Uplata</span>
+            </button>
+            <button type="button" class="button button--icon _animate _small tip" data-item-bill-copy aria-label="Kopiraj stavku">
+                <img src="{{ url_for('static', filename='images/copy.svg') }}" onload="SVGInject(this)" />
+            </button>
+            <button type="button" class="button button--icon _animate _small tip" data-item-bill-remove aria-label="Izbriši stavku">
+                <img src="{{ url_for('static', filename='images/trash.svg') }}" onload="SVGInject(this)" />
+            </button>
+        </div>
+    </div>
+</div>
