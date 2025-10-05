@@ -1252,6 +1252,7 @@ function otvoriModal(target) {
             modal.classList.add("open");
             document.body.classList.add("modal-open");
             inicijalizirajModalBrisanja();
+            inicijalizirajModalAzuriranjaKamata();
         })
         .catch(error => console.error("Greška pri otvaranju modala:", error));
 }
@@ -1299,6 +1300,333 @@ function inicijalizirajModalBrisanja() {
                 console.error("Greška pri brisanju:", err);
                 alert("Dogodila se greška. Pokušajte ponovno.");
             });
+    });
+}
+
+function inicijalizirajModalAzuriranjaKamata() {
+    const modal = document.querySelector('[data-modal="interest-update"]');
+    if (!modal) return;
+
+    const form = modal.querySelector('[data-form="interest-period-create"]');
+    const listContainer = modal.querySelector('[data-list="interest-periods"]');
+    const messageElement = modal.querySelector('[data-message="interest-update"]');
+    const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
+    const rateRegex = /^\d+\.\d{2}$/;
+
+    let hideTimeoutId = null;
+
+    const hideMessage = () => {
+        if (!messageElement) return;
+        messageElement.hidden = true;
+        if (hideTimeoutId) {
+            clearTimeout(hideTimeoutId);
+            hideTimeoutId = null;
+        }
+    };
+
+    const showMessage = (type, text) => {
+        if (!messageElement) return;
+        if (hideTimeoutId) {
+            clearTimeout(hideTimeoutId);
+            hideTimeoutId = null;
+        }
+        messageElement.textContent = text;
+        messageElement.hidden = false;
+        messageElement.classList.remove("alert--error", "alert--success");
+        messageElement.classList.add(type === "success" ? "alert--success" : "alert--error");
+
+        if (type === "success") {
+            hideTimeoutId = setTimeout(() => {
+                if (messageElement) {
+                    messageElement.hidden = true;
+                }
+                hideTimeoutId = null;
+            }, 3000);
+        }
+    };
+
+    const validateInputs = ({ datum_pocetka, datum_kraja, fizicke_osobe, pravne_osobe }) => {
+        if (
+            !dateRegex.test(datum_pocetka) ||
+            !dateRegex.test(datum_kraja) ||
+            !rateRegex.test(fizicke_osobe) ||
+            !rateRegex.test(pravne_osobe)
+        ) {
+            showMessage("error", "Format za unos datuma mora biti 01.01.2025 a za unos kamata 99.99");
+            return false;
+        }
+
+        hideMessage();
+        return true;
+    };
+
+    const formatRate = value => `${Number(value).toFixed(2)} %`;
+
+    const updatePeriodTitles = () => {
+        if (!listContainer) return;
+        const items = listContainer.querySelectorAll(".interest-period");
+        items.forEach((item, index) => {
+            const title = item.querySelector(".interest-period__title");
+            if (title) {
+                title.textContent = `Razdoblje ${index + 1}`;
+            }
+        });
+    };
+
+    const createPeriodElement = data => {
+        const { id, datum_pocetka, datum_kraja, fizicka_osoba, pravna_osoba } = data;
+        const element = document.createElement("li");
+        element.className = "interest-period";
+        element.dataset.id = id;
+        element.innerHTML = `
+            <header class="interest-period__header">
+                <p class="interest-period__title">Razdoblje</p>
+                <div class="interest-period__actions">
+                    <button type="button" class="button button--tiny button--secondary" data-action="edit-interest-period">Uredi razdoblje</button>
+                    <button type="button" class="button button--tiny button--plain" data-action="delete-interest-period">Obriši razdoblje</button>
+                </div>
+            </header>
+            <dl class="interest-period__details">
+                <div class="interest-period__row">
+                    <dt>Datum početka</dt>
+                    <dd>${datum_pocetka}</dd>
+                </div>
+                <div class="interest-period__row">
+                    <dt>Datum završetka</dt>
+                    <dd>${datum_kraja}</dd>
+                </div>
+                <div class="interest-period__row">
+                    <dt>Stopa za fizičke osobe</dt>
+                    <dd>${formatRate(fizicka_osoba)}</dd>
+                </div>
+                <div class="interest-period__row">
+                    <dt>Stopa za pravne osobe</dt>
+                    <dd>${formatRate(pravna_osoba)}</dd>
+                </div>
+            </dl>
+        `;
+
+        return element;
+    };
+
+    const ensureListExists = () => {
+        if (!listContainer) return null;
+
+        let list = listContainer.querySelector(".interest-periods-list");
+        if (!list) {
+            list = document.createElement("ul");
+            list.className = "interest-periods-list";
+            listContainer.innerHTML = "";
+            listContainer.appendChild(list);
+        }
+
+        return list;
+    };
+
+    const parseDisplayValue = value => value.replace(" %", "").trim();
+
+    const collectInputs = container => {
+        const payload = {};
+        container.querySelectorAll("input[data-field]").forEach(input => {
+            payload[input.dataset.field] = input.value.trim();
+        });
+        return payload;
+    };
+
+    if (form) {
+        form.addEventListener("submit", async event => {
+            event.preventDefault();
+
+            const payload = {
+                datum_pocetka: form.querySelector('[data-input="date-start"]').value.trim(),
+                datum_kraja: form.querySelector('[data-input="date-end"]').value.trim(),
+                fizicke_osobe: form.querySelector('[data-input="rate-physical"]').value.trim(),
+                pravne_osobe: form.querySelector('[data-input="rate-legal"]').value.trim(),
+            };
+
+            if (!validateInputs(payload)) {
+                return;
+            }
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) submitButton.disabled = true;
+
+            try {
+                const response = await fetch("/kamate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showMessage("error", data.error || "Dogodila se greška. Pokušajte ponovno.");
+                    return;
+                }
+
+                form.reset();
+                hideMessage();
+
+                const list = ensureListExists();
+                if (list) {
+                    const listItem = createPeriodElement(data);
+                    const first = list.firstElementChild;
+                    if (first) {
+                        list.insertBefore(listItem, first);
+                    } else {
+                        list.appendChild(listItem);
+                    }
+
+                    while (list.children.length > 10) {
+                        list.removeChild(list.lastElementChild);
+                    }
+                }
+
+                kamateCache = null;
+                dohvatiKamate();
+
+                showMessage("success", "Razdoblje je uspješno dodano.");
+                updatePeriodTitles();
+            } catch (error) {
+                console.error("Greška pri dodavanju kamate:", error);
+                showMessage("error", "Dogodila se greška. Pokušajte ponovno.");
+            } finally {
+                if (submitButton) submitButton.disabled = false;
+            }
+        });
+    }
+
+    modal.addEventListener("click", async event => {
+        const editButton = event.target.closest('[data-action="edit-interest-period"]');
+        const deleteButton = event.target.closest('[data-action="delete-interest-period"]');
+
+        if (editButton) {
+            const listItem = editButton.closest(".interest-period");
+            if (!listItem) return;
+
+            const details = listItem.querySelectorAll(".interest-period__details dd");
+            const fields = ["datum_pocetka", "datum_kraja", "fizicke_osobe", "pravne_osobe"];
+
+            if (listItem.dataset.editing === "true") {
+                const payload = collectInputs(listItem);
+
+                if (!validateInputs(payload)) {
+                    return;
+                }
+
+                editButton.disabled = true;
+
+                try {
+                    const response = await fetch(`/kamate/${listItem.dataset.id}`, {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        showMessage("error", data.error || "Dogodila se greška. Pokušajte ponovno.");
+                        return;
+                    }
+
+                    details.forEach((dd, index) => {
+                        if (index < 2) {
+                            dd.textContent = data[fields[index]] || payload[fields[index]];
+                        } else {
+                            const key = index === 2 ? "fizicka_osoba" : "pravna_osoba";
+                            dd.textContent = formatRate(data[key] || payload[fields[index]]);
+                        }
+                    });
+
+                    listItem.dataset.editing = "false";
+                    editButton.textContent = "Uredi razdoblje";
+                    showMessage("success", "Razdoblje je uspješno ažurirano.");
+
+                    const deleteActionButton = listItem.querySelector('[data-action="delete-interest-period"]');
+                    if (deleteActionButton) {
+                        deleteActionButton.disabled = false;
+                    }
+
+                    kamateCache = null;
+                    dohvatiKamate();
+                    updatePeriodTitles();
+                } catch (error) {
+                    console.error("Greška pri ažuriranju kamate:", error);
+                    showMessage("error", "Dogodila se greška. Pokušajte ponovno.");
+                } finally {
+                    editButton.disabled = false;
+                }
+
+                return;
+            }
+
+            details.forEach((dd, index) => {
+                const value = index < 2 ? dd.textContent.trim() : parseDisplayValue(dd.textContent);
+
+                const input = document.createElement("input");
+                input.type = "text";
+                input.value = value;
+                input.dataset.field = fields[index];
+                input.placeholder = index < 2 ? "01.01.2025" : "99.99";
+                dd.textContent = "";
+                dd.appendChild(input);
+            });
+
+            listItem.dataset.editing = "true";
+            editButton.textContent = "Spremi";
+
+            const deleteActionButton = listItem.querySelector('[data-action="delete-interest-period"]');
+            if (deleteActionButton) {
+                deleteActionButton.disabled = true;
+            }
+
+            return;
+        }
+
+        if (deleteButton) {
+            const listItem = deleteButton.closest(".interest-period");
+            if (!listItem) return;
+
+            if (!confirm("Jeste li sigurni da želite obrisati ovo razdoblje?")) {
+                return;
+            }
+
+            deleteButton.disabled = true;
+
+            try {
+                const response = await fetch(`/kamate/${listItem.dataset.id}`, {
+                    method: "DELETE",
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.success !== true) {
+                    showMessage("error", data.error || "Dogodila se greška. Pokušajte ponovno.");
+                    return;
+                }
+
+                listItem.remove();
+
+                const list = listContainer.querySelector(".interest-periods-list");
+                if (list && list.children.length === 0) {
+                    listContainer.innerHTML = '<p class="interest-periods__empty">Trenutačno nema zabilježenih razdoblja.</p>';
+                } else {
+                    updatePeriodTitles();
+                }
+
+                kamateCache = null;
+                dohvatiKamate();
+
+                showMessage("success", "Razdoblje je uspješno obrisano.");
+            } catch (error) {
+                console.error("Greška pri brisanju kamate:", error);
+                showMessage("error", "Dogodila se greška. Pokušajte ponovno.");
+            } finally {
+                deleteButton.disabled = false;
+            }
+        }
     });
 }
 
