@@ -1,0 +1,20 @@
+﻿Naziv izračuna;Opis izračuna;Vrsta izračuna;Datum izračuna;Valuta;Vjerovnik;Dužnik
+Izračun;;Obračun zateznih kamata za fizičku osobu;05.10.2025;EUR;;
+
+Stavka / Opis;;;Datum;Iznos;Dug po kamati;Ukupni dug
+Račun 123;;;01.10.2019;111,00;0,00;111,00
+Period obračuna;Osnovica;Br. dana;K. stopa;Kta razdoblja;Kta kumulativno;Dug kumulativno
+02.10.2019 - 31.12.2019;111,00;91;6.3%;1,74;1,74;112,74
+01.01.2020 - 30.06.2020;111,00;182;6.11%;3,37;5,12;116,12
+01.07.2020 - 31.12.2020;111,00;184;5.89%;3,29;8,40;119,40
+01.01.2021 - 30.06.2021;111,00;181;5.75%;3,17;11,57;122,57
+01.07.2021 - 14.10.2021;111,00;106;5.61%;1,81;13,38;124,38
+Uplata;;;14.10.2021;-222,00;0,00;-97,62
+Preplata;;;14.10.2021;;;-97,62
+
+Rekapitulacija
+Glavnica (1);111,00
+Kamate;0,00
+Uplate (1);-222,00
+Ukupni dug;-97,62
+Preplate (1);-97,62

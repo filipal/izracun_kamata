@@ -99,6 +99,28 @@ def get_kamate(tip_subjekta):
         for d in data
     ]
 
+def get_latest_kamata_end_date():
+    conn = sqlite3.connect("baza_kamata.db")
+    c = conn.cursor()
+
+    c.execute(
+        "SELECT datum_kraja FROM kamate WHERE datum_kraja IS NOT NULL AND TRIM(datum_kraja) != ''"
+    )
+    rows = c.fetchall()
+    conn.close()
+
+    najnoviji_datum = None
+    for (datum_str,) in rows:
+        try:
+            parsed_date = datetime.strptime(datum_str, "%d.%m.%Y").date()
+        except (TypeError, ValueError):
+            continue
+
+        if not najnoviji_datum or parsed_date > najnoviji_datum:
+            najnoviji_datum = parsed_date
+
+    return najnoviji_datum
+
 def izracunaj_broj_dana_moratorija(datum_pocetka, datum_kraja):
     """
     Funkcija koja računa koliko dana unutar datog perioda spada pod moratorij.
@@ -1099,18 +1121,6 @@ def izracun():
         tip_subjekta = data.get("tip_subjekta", "natural-person")
         warning_messages = []
 
-        kamate_podaci = get_kamate(tip_subjekta)
-        zadnji_datum_kamata = None
-        if kamate_podaci:
-            try:
-                zadnji_datum_kamata = max(
-                    datetime.strptime(kamatni_period.get("datum_kraja"), "%d.%m.%Y")
-                    for kamatni_period in kamate_podaci
-                    if kamatni_period.get("datum_kraja")
-                )
-            except ValueError:
-                zadnji_datum_kamata = None
-
         moratorium = data.get("moratorium", False)
         racuni = data.get("racuni", [])  # Svi računi dolaze ovdje
         print(f"Backend primio vrstu izračuna: {vrsta_izracuna}")
@@ -1127,12 +1137,13 @@ def izracun():
             return jsonify({"error": "Neispravan format datuma obračuna!"}), 400
 
         danasnji_datum = datetime.now().date()
+        zadnji_datum_kamata = get_latest_kamata_end_date()
         if datum_kraja.date() > danasnji_datum:
-            if zadnji_datum_kamata and datum_kraja <= zadnji_datum_kamata:
-                warning_messages.append("Izabrali ste datum obračuna kamata u budućnosti")
+            if zadnji_datum_kamata and datum_kraja.date() <= zadnji_datum_kamata:
+                warning_messages.append("Izabrali ste datum obračuna kamata u budućnosti.")
             else:
                 warning_messages.append(
-                    "OPREZ! Odabrali ste datum obračuna kamata nakon zadnjeg dostupnog datuma kamatnih stopa"
+                    "OPREZ! Odabrali ste datum obračuna kamata nakon zadnjeg dostupnog obračunskog razdoblja."
                 )
 
         # Kreiram skup (set) za praćenje ID-ova dodanih uplata
@@ -1369,7 +1380,8 @@ def izracun():
         json_response["vjerovnik"] = data.get("vjerovnik", {})
         json_response["duznik"] = data.get("duznik", {})
         json_response["vrsta_izracuna"] = data.get("vrsta_izracuna", "Nije odabrano")
-        json_response["warning_messages"] = warning_messages
+        if warning_messages:
+            json_response["warning_messages"] = warning_messages
 
         # Debug ispisi
         print("Backend šalje JSON sa uplatama:", json.dumps(json_response["uplate"], indent=4, ensure_ascii=False))
