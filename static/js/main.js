@@ -1311,6 +1311,10 @@ function inicijalizirajModalAzuriranjaKamata() {
     const listContainer = modal.querySelector('[data-list="interest-periods"]');
     const formSection = modal.querySelector('[data-section="interest-form"]');
     const messageElement = modal.querySelector('[data-message="interest-update"]');
+    const toggleButton = modal.querySelector('[data-action="toggle-interest-form"]');
+    if (!toggleButton) {
+        console.warn("Gumb za otvaranje forme kamata nije pronađen. Preskačem povezanu logiku.");
+    }
     const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
     const rateRegex = /^\d+\.\d{2}$/;
 
@@ -1456,13 +1460,16 @@ function inicijalizirajModalAzuriranjaKamata() {
                 }
             }
         });
+        setToggleButtonState();
     }
 
     if (form && formSection) {
         if (listContainer && listContainer.querySelector(".interest-periods__empty")) {
             formSection.hidden = false;
         }
-        setToggleButtonState();
+        if (toggleButton) {
+            setToggleButtonState();
+        }
     }
 
     if (form) {
@@ -1523,7 +1530,9 @@ function inicijalizirajModalAzuriranjaKamata() {
 
                 if (formSection) {
                     formSection.hidden = true;
-                    setToggleButtonState();
+                    if (toggleButton) {
+                        setToggleButtonState();
+                    }
                 }
             } catch (error) {
                 console.error("Greška pri dodavanju kamate:", error);
@@ -1532,7 +1541,7 @@ function inicijalizirajModalAzuriranjaKamata() {
                 if (submitButton) submitButton.disabled = false;
             }
         });
-    } else {
+    } else if (toggleButton) {
         setToggleButtonState();
     }
 
@@ -1653,7 +1662,9 @@ function inicijalizirajModalAzuriranjaKamata() {
                     listContainer.innerHTML = '<p class="interest-periods__empty">Trenutačno nema zabilježenih razdoblja.</p>';
                     if (formSection) {
                         formSection.hidden = false;
-                        setToggleButtonState();
+                        if (toggleButton) {
+                            setToggleButtonState();
+                        }
                     }
                 } else {
                     updatePeriodTitles();
