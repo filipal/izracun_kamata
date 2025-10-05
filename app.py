@@ -13,6 +13,49 @@ import pdfkit
 import json
 
 from datetime import datetime, timedelta
+
+DATE_FORMAT = "%d.%m.%Y"
+RATE_REGEX = re.compile(r"^\d+\.\d{2}$")
+
+
+class ValidationError(ValueError):
+    """Raised when kamata payload validation fails."""
+
+
+def _format_rate(value):
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return value
+
+
+def validate_kamata_payload(data):
+    if not isinstance(data, dict):
+        raise ValidationError("Invalid payload structure")
+
+    required_fields = ["datum_pocetka", "datum_kraja", "fizicke_osobe", "pravne_osobe"]
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        raise ValidationError(f"Missing fields: {', '.join(missing_fields)}")
+
+    try:
+        datetime.strptime(data["datum_pocetka"], DATE_FORMAT)
+        datetime.strptime(data["datum_kraja"], DATE_FORMAT)
+    except (TypeError, ValueError):
+        raise ValidationError("invalid_format")
+
+    for field in ["fizicke_osobe", "pravne_osobe"]:
+        value = data[field]
+        if not isinstance(value, str) or not RATE_REGEX.match(value):
+            raise ValidationError("invalid_format")
+
+    return {
+        "datum_pocetka": data["datum_pocetka"],
+        "datum_kraja": data["datum_kraja"],
+        "fizicke_osobe": data["fizicke_osobe"],
+        "pravne_osobe": data["pravne_osobe"],
+    }
+
 from flask_cors import CORS
 from bs4 import BeautifulSoup
 
@@ -685,20 +728,174 @@ def upload_file():
 
     return jsonify({"error": "Neispravan format datoteke"}), 400
 
-# Ruta za dohvat kamata
-@app.route("/kamate", methods=["GET"])
-def kamate():
-    conn = sqlite3.connect("baza_kamata.db")
-    c = conn.cursor()
-    c.execute("SELECT datum_pocetka, datum_kraja, fizicke_osobe, pravne_osobe FROM kamate")
-    data = c.fetchall()
-    conn.close()
+# Ruta za pregled najnovijih kamata
+@app.route("/interest-update")
+def interest_update():
+    try:
+        with sqlite3.connect("baza_kamata.db") as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id, datum_pocetka, datum_kraja, fizicke_osobe, pravne_osobe
+                FROM kamate
+                ORDER BY id DESC
+                LIMIT 10
+                """
+            )
+            rows = cursor.fetchall()
 
-    # Pravilno formatiranje podataka u JSON listu
-    return jsonify([
-        {"datum_pocetka": d[0], "datum_kraja": d[1], "fizicka_osoba": d[2], "pravna_osoba": d[3]}
-        for d in data
-    ])
+        periods = [
+            {
+                "id": row["id"],
+                "datum_pocetka": row["datum_pocetka"],
+                "datum_kraja": row["datum_kraja"],
+                "fizicke_osobe": _format_rate(row["fizicke_osobe"]),
+                "pravne_osobe": _format_rate(row["pravne_osobe"]),
+            }
+            for row in rows
+        ]
+
+        return render_template("interest_update.html", periods=periods)
+    except Exception as exc:
+        app.logger.exception("Failed to render interest update", exc_info=exc)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+# Ruta za dohvat i upravljanje kamatama
+@app.route("/kamate", methods=["GET", "POST"])
+def kamate():
+    if request.method == "GET":
+        try:
+            with sqlite3.connect("baza_kamata.db") as conn:
+                conn.row_factory = sqlite3.Row
+                c = conn.cursor()
+                c.execute("SELECT id, datum_pocetka, datum_kraja, fizicke_osobe, pravne_osobe FROM kamate")
+                rows = c.fetchall()
+
+            return jsonify([
+                {
+                    "id": row["id"],
+                    "datum_pocetka": row["datum_pocetka"],
+                    "datum_kraja": row["datum_kraja"],
+                    "fizicka_osoba": row["fizicke_osobe"],
+                    "pravna_osoba": row["pravne_osobe"],
+                }
+                for row in rows
+            ])
+        except Exception as exc:
+            app.logger.exception("Failed to fetch interest rates", exc_info=exc)
+            return jsonify({"error": "Internal server error"}), 500
+
+    try:
+        payload = request.get_json(force=True, silent=False)
+        validated_payload = validate_kamata_payload(payload)
+    except ValidationError as err:
+        if str(err) == "invalid_format":
+            message = "Format za unos datuma mora biti 01.01.2025 a za unos kamata 99.99"
+        else:
+            message = str(err)
+        return jsonify({"error": message}), 400
+    except Exception as exc:
+        app.logger.exception("Invalid request payload", exc_info=exc)
+        return jsonify({"error": "Internal server error"}), 500
+
+    try:
+        with sqlite3.connect("baza_kamata.db") as conn:
+            c = conn.cursor()
+            c.execute(
+                """
+                INSERT INTO kamate (datum_pocetka, datum_kraja, fizicke_osobe, pravne_osobe)
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    validated_payload["datum_pocetka"],
+                    validated_payload["datum_kraja"],
+                    validated_payload["fizicke_osobe"],
+                    validated_payload["pravne_osobe"],
+                ),
+            )
+            conn.commit()
+            new_id = c.lastrowid
+
+        stored_record = {
+            "id": new_id,
+            "datum_pocetka": validated_payload["datum_pocetka"],
+            "datum_kraja": validated_payload["datum_kraja"],
+            "fizicka_osoba": validated_payload["fizicke_osobe"],
+            "pravna_osoba": validated_payload["pravne_osobe"],
+        }
+
+        return jsonify(stored_record), 201
+    except Exception as exc:
+        app.logger.exception("Failed to insert interest rate", exc_info=exc)
+        return jsonify({"error": "Internal server error"}), 500
+
+
+# Ruta za ažuriranje i brisanje kamata
+@app.route("/kamate/<int:kamata_id>", methods=["PUT", "DELETE"])
+def modify_kamata(kamata_id):
+    if request.method == "DELETE":
+        try:
+            with sqlite3.connect("baza_kamata.db") as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM kamate WHERE id = ?", (kamata_id,))
+                if cursor.rowcount == 0:
+                    return jsonify({"error": "Kamata not found"}), 404
+                conn.commit()
+
+            return jsonify({"success": True, "deleted_id": kamata_id})
+        except Exception as exc:
+            app.logger.exception("Failed to delete interest rate", exc_info=exc)
+            return jsonify({"error": "Internal server error"}), 500
+
+    try:
+        payload = request.get_json(force=True, silent=False)
+        validated_payload = validate_kamata_payload(payload)
+    except ValidationError as err:
+        if str(err) == "invalid_format":
+            message = "Format za unos datuma mora biti 01.01.2025 a za unos kamata 99.99"
+        else:
+            message = str(err)
+        return jsonify({"error": message}), 400
+    except Exception as exc:
+        app.logger.exception("Invalid request payload", exc_info=exc)
+        return jsonify({"error": "Internal server error"}), 500
+
+    try:
+        with sqlite3.connect("baza_kamata.db") as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE kamate
+                SET datum_pocetka = ?, datum_kraja = ?, fizicke_osobe = ?, pravne_osobe = ?
+                WHERE id = ?
+                """,
+                (
+                    validated_payload["datum_pocetka"],
+                    validated_payload["datum_kraja"],
+                    validated_payload["fizicke_osobe"],
+                    validated_payload["pravne_osobe"],
+                    kamata_id,
+                ),
+            )
+            if cursor.rowcount == 0:
+                return jsonify({"error": "Kamata not found"}), 404
+            conn.commit()
+
+        updated_record = {
+            "id": kamata_id,
+            "datum_pocetka": validated_payload["datum_pocetka"],
+            "datum_kraja": validated_payload["datum_kraja"],
+            "fizicka_osoba": validated_payload["fizicke_osobe"],
+            "pravna_osoba": validated_payload["pravne_osobe"],
+        }
+
+        return jsonify(updated_record)
+    except Exception as exc:
+        app.logger.exception("Failed to update interest rate", exc_info=exc)
+        return jsonify({"error": "Internal server error"}), 500
+
 
 # Ruta za generiranje i preuzimanje PDF-a
 @app.route("/preuzmi_pdf", methods=["POST"])
