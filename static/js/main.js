@@ -1312,7 +1312,8 @@ function inicijalizirajModalAzuriranjaKamata() {
     const formSection = modal.querySelector('[data-section="interest-form"]');
     const messageElement = modal.querySelector('[data-message="interest-update"]');
     const toggleButton = modal.querySelector('[data-action="toggle-interest-form"]');
-    if (!toggleButton) {
+    const hasToggleButton = Boolean(toggleButton);
+    if (!hasToggleButton) {
         console.warn("Gumb za otvaranje forme kamata nije pronađen. Preskačem povezanu logiku.");
     }
     const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
@@ -1368,7 +1369,7 @@ function inicijalizirajModalAzuriranjaKamata() {
     const formatRate = value => `${Number(value).toFixed(2)} %`;
 
     const setToggleButtonState = () => {
-        if (!toggleButton) return;
+        if (!hasToggleButton) return;
         toggleButton.textContent = formSection && !formSection.hidden
             ? "Zatvori unos"
             : "Dodaj novo razdoblje";
@@ -1448,7 +1449,7 @@ function inicijalizirajModalAzuriranjaKamata() {
         return payload;
     };
 
-    if (toggleButton && formSection) {
+    if (hasToggleButton && formSection) {
         toggleButton.addEventListener("click", () => {
             formSection.hidden = !formSection.hidden;
             setToggleButtonState();
@@ -1467,7 +1468,7 @@ function inicijalizirajModalAzuriranjaKamata() {
         if (listContainer && listContainer.querySelector(".interest-periods__empty")) {
             formSection.hidden = false;
         }
-        if (toggleButton) {
+        if (hasToggleButton) {
             setToggleButtonState();
         }
     }
@@ -1530,7 +1531,7 @@ function inicijalizirajModalAzuriranjaKamata() {
 
                 if (formSection) {
                     formSection.hidden = true;
-                    if (toggleButton) {
+                    if (hasToggleButton) {
                         setToggleButtonState();
                     }
                 }
@@ -1541,7 +1542,7 @@ function inicijalizirajModalAzuriranjaKamata() {
                 if (submitButton) submitButton.disabled = false;
             }
         });
-    } else if (toggleButton) {
+    } else if (hasToggleButton) {
         setToggleButtonState();
     }
 
@@ -1662,7 +1663,7 @@ function inicijalizirajModalAzuriranjaKamata() {
                     listContainer.innerHTML = '<p class="interest-periods__empty">Trenutačno nema zabilježenih razdoblja.</p>';
                     if (formSection) {
                         formSection.hidden = false;
-                        if (toggleButton) {
+                        if (hasToggleButton) {
                             setToggleButtonState();
                         }
                     }
