@@ -756,7 +756,7 @@ def interest_update():
             for row in rows
         ]
 
-        return render_template("interest_update.html", interest_periods=periods)
+        return render_template("interest_update.html", periods=periods)
     except Exception as exc:
         app.logger.exception("Failed to render interest update", exc_info=exc)
         return jsonify({"error": "Internal server error"}), 500
